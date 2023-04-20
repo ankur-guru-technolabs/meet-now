@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Api;
 use Illuminate\Support\Facades\File;
 use App\Http\Controllers\BaseController;
 use App\Http\Controllers\API\AuthController;
+use App\Models\Gender;
+use App\Models\Hobby;
 use App\Models\User;
 use App\Models\UserPhoto;
 use Illuminate\Http\Request;
@@ -27,6 +29,12 @@ class CustomerController extends BaseController
             $data['user']->media->map(function ($photo) {
                 $photo->append('profile_photo');
             });
+
+            $hobbies_id                     = $data['user']['hobbies'];
+            $hobbyNames                     = Hobby::whereRaw("FIND_IN_SET(id, '$hobbies_id') > 0")->pluck('name');
+            $data['user']['hobbies_new']    = implode(", ", $hobbyNames->toArray());
+            $data['user']['gender_new']                = Gender::where('id',$data['user']['gender'])->pluck('gender')->first();
+            $data['user']['interested_gender_new']     = Gender::where('id',$data['user']['interested_gender'])->pluck('gender')->first();
             return $this->success($data,'User profile data');
         }catch(Exception $e){
             return $this->error($e->getMessage(),'Exception occur');
