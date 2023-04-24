@@ -14,7 +14,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use DateTime;
 use Exception;
-use Helper;
+use Helper; 
 use Validator;
 
 class CustomerController extends BaseController
@@ -224,12 +224,16 @@ class CustomerController extends BaseController
                 'hobbies' => 'required',
                 'min_age' => 'required',
                 'max_age' => 'required|gte:min_age',
+                'min_distance' => 'required',
+                'max_distance' => 'required|gte:min_distance',
+                'latitude'  => 'required',
+                'longitude' => 'required',
             ]);
 
             if ($validateData->fails()) {
                 return $this->error($validateData->errors(),'Validation error',403);
             }
-            $data['user_list'] = User::where('id', '!=', Auth::id())
+            $data['user_list'] = User::where('users.id', '!=', Auth::id())
                                 ->where('user_type', 'user')
                                 ->where('gender', $request->interested_gender)
                                 ->where('interested_gender', Auth::user()->gender)
@@ -242,15 +246,65 @@ class CustomerController extends BaseController
                                         }
                                     }
                                 })
-                                ->select('id', 'name', 'location', 'age')
+                                ->leftJoin('user_likes as ul1', function ($join) {
+                                    $join->on('users.id', '=', 'ul1.like_from')
+                                         ->where('ul1.like_to', '=', Auth::id());
+                                })
+                                ->leftJoin('user_likes as ul2', function ($join) {
+                                    $join->on('users.id', '=', 'ul2.like_to')
+                                         ->where('ul2.like_from', '=', Auth::id());
+                                })
+                                ->whereNull('ul1.id')
+                                ->whereNull('ul2.id')
+                                ->where('users.updated_at', '>=', now()->subMinutes(5))
+                                ->select('users.id', 'name', 'location', 'age','live_latitude','live_longitude')
                                 ->get()
-                                ->map(function ($user) {
+                                ->map(function ($user) use ($request) {
                                     $user->profile_photo = $user->media->first()->profile_photo;
                                     unset($user->media);
-                                    return $user;
+                                    
+                                    $auth_lat1 = deg2rad($request->latitude);
+                                    $auth_lon1 = deg2rad($request->longitude);
+                                    $lat2 = deg2rad($user->live_latitude);
+                                    $lon2 = deg2rad($user->live_longitude);
+                                    $dLat = $lat2 - $auth_lat1;
+                                    $dLon = $lon2 - $auth_lon1;
+                                    $a = sin($dLat/2) * sin($dLat/2) + cos($auth_lat1) * cos($lat2) * sin($dLon/2) * sin($dLon/2);
+                                    $distance = round(3959 * 2 * atan2(sqrt($a), sqrt(1-$a)) * 1760,2);  
+                                    $user->distance = $distance;
+                                    if($distance >= $request->min_distance && $distance <= $request->max_distance ){
+                                        return $user;
+                                    }
                                 });
-        
+            if (empty($data['user_list'][0])) {
+                $data['user_list'] = [];
+            }
             return $this->success($data,'Discovery list');
+        }catch(Exception $e){
+            return $this->error($e->getMessage(),'Exception occur');
+        }
+        return $this->error('Something went wrong','Something went wrong');
+    }
+
+    // USER LIVE LOCATION UPDATE
+    
+    public function updateLocation(Request $request){
+        try{
+            $validateData = Validator::make($request->all(), [
+                'latitude'  => 'required',
+                'longitude' => 'required',
+            ]);
+
+            if ($validateData->fails()) {
+                return $this->error($validateData->errors(),'Validation error',403);
+            }
+
+            if (Auth::user()) {
+                $user_id   = Auth::user()->id;
+                $user_data = User::where('id',$user_id)->update(['live_latitude' =>  $request->latitude, 'live_longitude' => $request->longitude]);
+                return $this->success([],'Location updated successfullly');
+            }
+            return $this->error('Something went wrong','Something went wrong');
         }catch(Exception $e){
             return $this->error($e->getMessage(),'Exception occur');
         }

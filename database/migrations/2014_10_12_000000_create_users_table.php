@@ -21,6 +21,8 @@ return new class extends Migration
             $table->string('location');
             $table->string('latitude');
             $table->string('longitude');
+            $table->string('live_latitude')->nullable();
+            $table->string('live_longitude')->nullable();
             $table->string('birth_date');
             $table->string('age');
             $table->string('gender');

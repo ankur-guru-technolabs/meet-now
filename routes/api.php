@@ -28,6 +28,6 @@ Route::middleware('auth:api')->group(function () {
     Route::post('update-user-profile', [CustomerController::class,'updateProfile'])->name('update-user-profile');
     Route::post('swipe-profile', [CustomerController::class,'swipeProfile'])->name('swipe-profile');
     Route::post('discover-profile', [CustomerController::class,'discoverProfile'])->name('discover-profile');
-    
+    Route::post('update-location', [CustomerController::class,'updateLocation'])->name('update-location');
     Route::get('log-out', [CustomerController::class,'logout'])->name('log-out');
 });

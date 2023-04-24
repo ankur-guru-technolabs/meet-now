@@ -24,6 +24,8 @@ class User extends Authenticatable
         'location',
         'latitude',
         'longitude',
+        'live_latitude',
+        'live_longitude',
         'birth_date',
         'age',
         'gender',
