@@ -57,7 +57,6 @@ class User extends Authenticatable
         'email_verified_at' => 'datetime',
         'gender' => 'int',
         'interested_gender' => 'int',
-        'hobbies' => 'int',
     ];
 
     public function media()
