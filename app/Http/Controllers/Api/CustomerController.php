@@ -10,6 +10,7 @@ use App\Models\Hobby;
 use App\Models\User;
 use App\Models\UserLikes;
 use App\Models\UserPhoto;
+use App\Models\UserView;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use DateTime;
@@ -30,10 +31,23 @@ class CustomerController extends BaseController
             });
 
             $hobbies_id                     = $data['user']['hobbies'];
+            $hobbies_array                  = explode(",", $hobbies_id); 
+            $data['user']['hobbies_new']    = array_map('intval', $hobbies_array);
             $hobbyNames                     = Hobby::whereRaw("FIND_IN_SET(id, '$hobbies_id') > 0")->pluck('name');
-            $data['user']['hobbies_new']    = implode(", ", $hobbyNames->toArray());
+            $data['user']['hobbies_name']   = implode(", ", $hobbyNames->toArray());
             $data['user']['gender_new']                = Gender::where('id',$data['user']['gender'])->pluck('gender')->first();
             $data['user']['interested_gender_new']     = Gender::where('id',$data['user']['interested_gender'])->pluck('gender')->first();
+
+            if($request->id != Auth::id()){
+                
+                // Check user is already liked and then after view profile ? in that scnario no data will inserted
+
+                $user_likes = UserLikes::where('like_from',Auth::id())->where('like_to',$request->id)->first();
+                $user_view = UserView::where('view_from',Auth::id())->where('view_to',$request->id)->first();
+                if(empty($user_likes) && empty($user_view)){
+                    UserView::create(['view_from'=>Auth::id(),'view_to'=> $request->id]);
+                };
+            }
             return $this->success($data,'User profile data');
         }catch(Exception $e){
             return $this->error($e->getMessage(),'Exception occur');
@@ -152,13 +166,15 @@ class CustomerController extends BaseController
             $data['user']           = User::select('id','hobbies','interested_gender')->find(Auth::id());
             $hobbies_id             = $data['user']['hobbies']; 
 
-            $data['hobbies_new']    = explode(",", $hobbies_id); 
+            $hobbies_array          = explode(",", $hobbies_id); 
+            $data['hobbies_new']    = array_map('intval', $hobbies_array);
+
             $data['hobby']          = Hobby::select('id','name')->get();
             $data['gender']         = Gender::select('id','gender')->get();
-            $data['min_age']        = env('MIN_AGE', 18);
-            $data['max_age']        = env('MAX_AGE', 30);
-            $data['min_distance']   = env('MIN_DISTANCE', 1);
-            $data['max_distance']   = env('MAX_DISTANCE', 1);
+            $data['min_age']        = (int)env('MIN_AGE', 18);
+            $data['max_age']        = (int)env('MAX_AGE', 30);
+            $data['min_distance']   = (int)env('MIN_DISTANCE', 1);
+            $data['max_distance']   = (int)env('MAX_DISTANCE', 1);
 
             return $this->success($data,'Filter data');
         }catch(Exception $e){
@@ -201,10 +217,20 @@ class CustomerController extends BaseController
                 $input['matched_at']    = now();
                 
                 UserLikes::where('like_from',$input['like_to'])->where('like_to',$input['like_from'])->where('status',$input['status'])->update(
-                    ['match_id' => $input   ['match_id'],'match_status' => $input['match_status'],'matched_at' => $input['matched_at']]);
+                    ['match_id' => $input['match_id'],'match_status' => $input['match_status'],'matched_at' => $input['matched_at']]);
             }
 
             if(!$same_request){
+                // Check logged in user viewd opposite user profile and now liking that user profile then delete
+
+                if($input['status'] == 1){
+                    UserView::where('view_from',Auth::id())->where('view_to',$input['like_to'])->delete();
+                }
+                
+                // Check logged in user's profile viewd by opposite user profile and now logged in user liking or disliking that user profile then delete
+
+                UserView::where('view_from',$input['like_to'])->where('view_to',Auth::id())->delete();
+
                 UserLikes::create($input);
             }
 
@@ -260,7 +286,8 @@ class CustomerController extends BaseController
                                 ->select('users.id', 'name', 'location', 'age','live_latitude','live_longitude')
                                 ->get()
                                 ->map(function ($user) use ($request) {
-                                    $user->profile_photo = $user->media->first()->profile_photo;
+                                    $profile_photo_media = $user->media->firstWhere('type', 'image');
+                                    $user->profile_photo = $profile_photo_media->profile_photo;
                                     unset($user->media);
                                     
                                     $auth_lat1 = deg2rad($request->latitude);
@@ -285,6 +312,80 @@ class CustomerController extends BaseController
         }
         return $this->error('Something went wrong','Something went wrong');
     }
+
+    // WHO LIKES ME LISTING
+
+    public function whoLikesMe(Request $request){
+        try{
+            $user_likes_listing = UserLikes::with(['users:id,name,age', 'users.media:id,user_id,name,type'])
+                                        ->where('user_likes.like_to',Auth::id())
+                                        ->where('user_likes.status',1)
+                                        ->where('user_likes.match_status',2)
+                                        ->select('user_likes.id', 'user_likes.like_from','user_likes.like_to')
+                                        ->paginate($request->input('perPage'), ['*'], 'page', $request->input('page'));
+
+            $data['user_likes_listing'] = $user_likes_listing->map(function ($user){
+                                            if($user->users->isNotEmpty()){
+                                                $profile_photo_media = $user->users->first()->media->firstWhere('type', 'image');
+                                                $user->user_id = $user->users->first()->id;
+                                                $user->name = $user->users->first()->name;
+                                                $user->age = $user->users->first()->age;
+                                                $user->profile_photo = $profile_photo_media->profile_photo;
+                                                unset($user->users);
+                                            }
+                                            return $user;
+                                        })->filter(function ($user){
+                                            return isset($user->user_id);
+                                        })
+                                        ->values();
+                                        
+            $data['current_page'] = $user_likes_listing->currentPage();
+            $data['per_page']     = $user_likes_listing->perPage();
+            $data['total']        = $user_likes_listing->total();
+            $data['last_page']    = $user_likes_listing->lastPage();
+            return $this->success($data,'Who likes me listing');
+        }catch(Exception $e){
+            return $this->error($e->getMessage(),'Exception occur');
+        }
+        return $this->error('Something went wrong','Something went wrong');
+    }
+
+    // WHO VIEWED ME LISTING
+
+    public function whoViewedMe(Request $request){
+        try{
+            $user_view_listing = UserView::with(['users:id,name,age', 'users.media:id,user_id,name,type'])
+                                        ->where('user_views.view_to',Auth::id())
+                                        ->select('user_views.id', 'user_views.view_from','user_views.view_to')
+                                        ->paginate($request->input('perPage'), ['*'], 'page', $request->input('page'));
+
+            $data['user_view_listing'] = $user_view_listing->map(function ($user){
+                                            if($user->users->isNotEmpty()){
+                                                $profile_photo_media = $user->users->first()->media->firstWhere('type', 'image');
+                                                $user->user_id = $user->users->first()->id;
+                                                $user->name = $user->users->first()->name;
+                                                $user->age = $user->users->first()->age;
+                                                $user->profile_photo = $profile_photo_media->profile_photo;
+                                                unset($user->users);
+                                            }
+                                            return $user;
+                                        })->filter(function ($user){
+                                            return isset($user->user_id);
+                                        })
+                                        ->values();
+            
+            $data['current_page'] = $user_view_listing->currentPage();
+            $data['per_page']     = $user_view_listing->perPage();
+            $data['total']        = $user_view_listing->total();
+            $data['last_page']    = $user_view_listing->lastPage();
+
+            return $this->success($data,'Who viewd me listing');
+        }catch(Exception $e){
+            return $this->error($e->getMessage(),'Exception occur');
+        }
+        return $this->error('Something went wrong','Something went wrong');
+    }
+
 
     // USER LIVE LOCATION UPDATE
     

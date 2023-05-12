@@ -56,9 +56,18 @@ class User extends Authenticatable
      * @var array<string, string>
      */
     protected $casts = [
-        'email_verified_at' => 'datetime',
+        'latitude'=>'float',
+        'longitude'=>'float',
+        'live_latitude'=>'float',
+        'live_longitude'=>'float',
+        'age' => 'int',
         'gender' => 'int',
         'interested_gender' => 'int',
+        'status'=> 'int',
+        'email_verified' => 'int',
+        'phone_verified'=> 'int',
+        'otp_verified'=> 'int',
+        'email_verified_at' => 'datetime',
     ];
 
     public function media()

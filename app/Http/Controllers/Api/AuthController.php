@@ -24,6 +24,8 @@ class AuthController extends BaseController
             $otp    = substr(number_format(time() * rand(),0,'',''),0,4);
             $data   = [];
             $data['is_user_exist'] = 0;
+            $data['otp'] = (int)$otp;
+
             if(isset($request->email)){
                 $validateData = Validator::make($request->all(), [
                     // 'email' => 'required|email|unique:users,email',
@@ -111,7 +113,7 @@ class AuthController extends BaseController
                     $data['user_id'] = 0;
                     $data['is_user_exist'] = 0;
                     $data['is_email_verified'] = 0;
-                    $data['otp'] = $request->otp;
+                    $data['otp'] = (int)$request->otp;
 
 
                     // When user update email and come to verify screen at that time it is required to send id
