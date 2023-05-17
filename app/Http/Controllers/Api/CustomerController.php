@@ -72,6 +72,7 @@ class CustomerController extends BaseController
                 'birth_date' => 'required',
                 'media'      => 'sometimes|required',
                 'media.*'   => 'sometimes|required|file|mimes:jpeg,png,jpg,mp4,mov,avi|max:10240',
+                'thumbnail_image' => 'sometimes|file|mimes:jpeg,png,jpg',
                 'hobbies' => [
                     'required',
                     function ($attribute, $value, $fail) {
@@ -103,9 +104,17 @@ class CustomerController extends BaseController
                 }
 
                 $user_data->update($request->except(['phone_no','email']));
+
+                $folderPath = public_path().'/user_profile';
+
+                if (!is_dir($folderPath)) {
+                    mkdir($folderPath, 0777, true);
+                }
+
+
                 if (isset($request->image) && $request->hasFile('media')) {
 
-                    $user_old_photo_name = UserPhoto::whereIn('id', $request->image)->where('user_id',$request->user_id)->pluck('name')->toArray();
+                    $user_old_photo_name = UserPhoto::whereIn('id', $request->image)->where('user_id',$request->user_id)->where('type','!=','thumbnail_image')->pluck('name')->toArray();
                     $deletedFiles = [];
 
                     if(!empty($user_old_photo_name)){
@@ -120,15 +129,10 @@ class CustomerController extends BaseController
                             }
                         };
                     }
-                    UserPhoto::whereIn('id', $request->image)->where('user_id',$request->user_id)->delete();
+                    UserPhoto::whereIn('id', $request->image)->where('user_id',$request->user_id)->where('type','!=','thumbnail_image')->delete();
 
                     $medias = $request->file('media');
-                    $folderPath = public_path().'/user_profile';
-
-                    if (!is_dir($folderPath)) {
-                        mkdir($folderPath, 0777, true);
-                    }
-
+                  
                     foreach ($medias as $photo) {
                         $extension  = $photo->getClientOriginalExtension();
                         $filename = 'User_'.$user_data->id.'_'.random_int(10000, 99999). '.' . $extension;
@@ -143,6 +147,32 @@ class CustomerController extends BaseController
                         $user_photo_data['name'] = $filename;
                         UserPhoto::create($user_photo_data);
                     }
+                }
+
+                if ($request->hasFile('thumbnail_image')) {
+
+                    $user_old_thumbnail_name = UserPhoto::where('user_id',$request->user_id)->where('type','thumbnail_image')->pluck('name')->toArray();
+                    $path = public_path('user_profile/' . $user_old_thumbnail_name);
+                    if (File::exists($path)) {
+                        if (!is_writable($path)) {
+                            chmod($path, 0777);
+                        }
+                        File::delete($path);
+                    }
+
+                    UserPhoto::where('user_id',$request->user_id)->where('type','thumbnail_image')->delete();
+
+                    $thumbnail_image = $request->file('thumbnail_image');
+                    $extension  = $thumbnail_image->getClientOriginalExtension();
+                    $filename = 'User_'.$user_data->id.'_'.random_int(10000, 99999). '.' . $extension;
+                    $thumbnail_image->move(public_path('user_profile'), $filename);
+
+                    if ($extension == 'jpg' || $extension == 'jpeg' || $extension == 'png') {
+                        $user_photo_data['type'] = 'thumbnail_image';
+                    } 
+                    $user_photo_data['user_id'] = $user_data->id;
+                    $user_photo_data['name'] = $filename;
+                    UserPhoto::create($user_photo_data);
                 }
 
                 $user_data->new_email = null;

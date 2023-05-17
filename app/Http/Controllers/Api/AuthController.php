@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use Illuminate\Support\Facades\File;
 use App\Http\Controllers\BaseController;
 use App\Models\Gender;
 use App\Models\Hobby;
@@ -199,7 +200,8 @@ class AuthController extends BaseController
                 'media'     => 'required',
                 'birth_date' => 'required',
                 'media'      => 'required|array|min:4',
-                'media.*'   => 'required|file|mimes:jpeg,png,jpg,mp4,mov,avi|max:10240',
+                'media.*'    => 'required|file|mimes:jpeg,png,jpg,mp4,mov,avi|max:10240',
+                'thumbnail_image' => 'required|file|mimes:jpeg,png,jpg',
                 'hobbies' => [
                     'required',
                     function ($attribute, $value, $fail) {
@@ -227,12 +229,15 @@ class AuthController extends BaseController
             $user_data  = User::create($input);
 
             if(isset($user_data->id)){
+
+                $folderPath = public_path().'/user_profile';
+                if (!is_dir($folderPath)) {
+                    mkdir($folderPath, 0777, true);
+                }
+
                 if ($request->hasFile('media')) {
                     $medias = $request->file('media');
-                    $folderPath = public_path().'/user_profile';
-                    if (!is_dir($folderPath)) {
-                        mkdir($folderPath, 0777, true);
-                    }
+                  
                     foreach ($medias as $media) {
                         $extension  = $media->getClientOriginalExtension();
                         $filename = 'User_'.$user_data->id.'_'.random_int(10000, 99999). '.' . $extension;
@@ -248,10 +253,43 @@ class AuthController extends BaseController
                         UserPhoto::create($user_photo_data);
                     }
                 }
+
+                if ($request->hasFile('thumbnail_image')) {
+                    $thumbnail_image = $request->file('thumbnail_image');
+                    $extension  = $thumbnail_image->getClientOriginalExtension();
+                    $filename = 'User_'.$user_data->id.'_'.random_int(10000, 99999). '.' . $extension;
+                    $thumbnail_image->move(public_path('user_profile'), $filename);
+
+                    if ($extension == 'jpg' || $extension == 'jpeg' || $extension == 'png') {
+                        $user_photo_data['type'] = 'thumbnail_image';
+                    } 
+                    $user_photo_data['user_id'] = $user_data->id;
+                    $user_photo_data['name'] = $filename;
+                    UserPhoto::create($user_photo_data);
+                } 
                 return $this->success($user_data,'You are successfully registered');
             }
             return $this->error('Something went wrong','Something went wrong');
         }catch(Exception $e){
+            if(isset($user_data->id)){
+                $user_old_photo_name = UserPhoto::where('user_id',$user_data->id)->pluck('name')->toArray();
+
+                $deletedFiles = [];
+                if(!empty($user_old_photo_name)){
+                    foreach ($user_old_photo_name as $name) {
+                        $path = public_path('user_profile/' . $name);
+                        if (File::exists($path)) {
+                            if (!is_writable($path)) {
+                                chmod($path, 0777);
+                            }
+                            File::delete($path);
+                            $deletedFiles[] = $path;
+                        }
+                    };
+                }
+                UserPhoto::where('user_id',$user_data->id)->delete();
+                User::where('id',$user_data->id)->delete();
+            }
             return $this->error($e->getMessage(),'Exception occur');
         }
         return $this->error('Something went wrong','Something went wrong');
