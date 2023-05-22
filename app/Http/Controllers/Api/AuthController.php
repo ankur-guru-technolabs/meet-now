@@ -267,6 +267,10 @@ class AuthController extends BaseController
                     $user_photo_data['name'] = $filename;
                     UserPhoto::create($user_photo_data);
                 } 
+                $temp         = Temp::where('key',$request->email)->first();
+                if($temp != null){
+                    $user_data['otp'] = (int)$temp->value; 
+                }
                 return $this->success($user_data,'You are successfully registered');
             }
             return $this->error('Something went wrong','Something went wrong');
