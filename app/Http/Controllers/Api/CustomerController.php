@@ -15,6 +15,7 @@ use App\Models\UserView;
 use App\Models\UserReport;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use App\Lib\RtcTokenBuilder;
 use DateTime;
 use Exception;
 use Helper; 
@@ -114,7 +115,7 @@ class CustomerController extends BaseController
                 }
 
 
-                if (isset($request->image) && $request->hasFile('media')) {
+                if (isset($request->image)) {
 
                     $user_old_photo_name = UserPhoto::whereIn('id', $request->image)->where('user_id',$request->user_id)->where('type','!=','thumbnail_image')->pluck('name')->toArray();
                     $deletedFiles = [];
@@ -132,27 +133,28 @@ class CustomerController extends BaseController
                         };
                     }
                     UserPhoto::whereIn('id', $request->image)->where('user_id',$request->user_id)->where('type','!=','thumbnail_image')->delete();
-
-                    $medias = $request->file('media');
-                  
-                    foreach ($medias as $photo) {
-                        $extension  = $photo->getClientOriginalExtension();
-                        $filename = 'User_'.$user_data->id.'_'.random_int(10000, 99999). '.' . $extension;
-                        $photo->move(public_path('user_profile'), $filename);
-
-                        if ($extension == 'jpg' || $extension == 'jpeg' || $extension == 'png') {
-                            $user_photo_data['type'] = 'image';
-                        } elseif ($extension == 'mp4' || $extension == 'avi' || $extension == 'mov') {
-                            $user_photo_data['type'] = 'video';
-                        } 
-                        $user_photo_data['user_id'] = $user_data->id;
-                        $user_photo_data['name'] = $filename;
-                        UserPhoto::create($user_photo_data);
+                    
+                    if($request->hasFile('media')){
+                        $medias = $request->file('media');
+                      
+                        foreach ($medias as $photo) {
+                            $extension  = $photo->getClientOriginalExtension();
+                            $filename = 'User_'.$user_data->id.'_'.random_int(10000, 99999). '.' . $extension;
+                            $photo->move(public_path('user_profile'), $filename);
+    
+                            if ($extension == 'jpg' || $extension == 'jpeg' || $extension == 'png') {
+                                $user_photo_data['type'] = 'image';
+                            } elseif ($extension == 'mp4' || $extension == 'avi' || $extension == 'mov') {
+                                $user_photo_data['type'] = 'video';
+                            } 
+                            $user_photo_data['user_id'] = $user_data->id;
+                            $user_photo_data['name'] = $filename;
+                            UserPhoto::create($user_photo_data);
+                        }
                     }
                 }
 
-                if ($request->hasFile('thumbnail_image')) {
-
+                if(isset($request->is_thumbnail_change) && $request->is_thumbnail_change == 1){
                     $user_old_thumbnail_name = UserPhoto::where('user_id',$request->user_id)->where('type','thumbnail_image')->pluck('name')->toArray();
                     $path = public_path('user_profile/' . $user_old_thumbnail_name);
                     if (File::exists($path)) {
@@ -161,9 +163,11 @@ class CustomerController extends BaseController
                         }
                         File::delete($path);
                     }
-
+    
                     UserPhoto::where('user_id',$request->user_id)->where('type','thumbnail_image')->delete();
+                }
 
+                if ($request->hasFile('thumbnail_image')) {
                     $thumbnail_image = $request->file('thumbnail_image');
                     $extension  = $thumbnail_image->getClientOriginalExtension();
                     $filename = 'User_'.$user_data->id.'_'.random_int(10000, 99999). '.' . $extension;
@@ -244,7 +248,7 @@ class CustomerController extends BaseController
             if($opposite_request && $input['status'] == 1){
                 $maxId = UserLikes::where('match_id', '>', 0)->max('match_id');
              
-                $input['match_id']      = $maxId > 10000 ? $maxId + 1 : 10000;
+                $input['match_id']      = ($maxId > 10000 || $maxId == 10000) ? $maxId + 1 : 10000;
                 $input['match_status']  = 1;
                 $input['matched_at']    = now();
                 
@@ -391,7 +395,7 @@ class CustomerController extends BaseController
                                     ->where('receiver_id',Auth::id())
                                     ->select('chats.id', 'chats.match_id','chats.sender_id','chats.receiver_id','chats.read_status')
                                     ->selectRaw('MAX(chats.message) as last_message')
-                                    ->selectRaw('SUM(chats.read_status = "0") as unread_message_count')
+                                    ->selectRaw('(SELECT COUNT(*) FROM chats AS sub_chats WHERE sub_chats.match_id = chats.match_id AND sub_chats.read_status = 0) as unread_message_count')
                                     ->leftJoin('user_likes as ul', function ($join) {
                                         $join->on('chats.match_id', '=', 'ul.match_id');
                                     })
@@ -618,6 +622,67 @@ class CustomerController extends BaseController
             return $this->error($e->getMessage(),'Exception occur');
         }
         return $this->error('Something went wrong','Something went wrong');
+    }
+
+    // VIDEO CALL
+
+    public function singleVideoCall(Request $request){
+        try{
+            $validateData = Validator::make($request->all(),[
+                'receiver_id'  => 'required|int',
+            ]);
+    
+            if ($validateData->fails()) {
+                return $this->error($validateData->errors(),'Validation error',403);
+            }
+
+            if (Auth::user()) { 
+                $appID =  env("AGORA_APP_ID", "d13ef194c8e74a21be2d1e7672792be3");
+                $appCertificate = env("AGORA_APP_CERTIFICATE", "cbef905ce5c5413884623f8fc0567215");
+
+                $channelName = $this->generateRandomChannel(8);
+                $userId = $this->generateRandomUid();
+                $role = RtcTokenBuilder::RoleAttendee;
+
+                $expireTimeInSeconds = 3600;
+                $currentTimestamp = now()->getTimestamp();
+                $privilegeExpiredTs = $currentTimestamp + $expireTimeInSeconds;
+
+                $rtcToken1 = RtcTokenBuilder::buildTokenWithUserAccount($appID, $appCertificate, $channelName, $userId, $role, $privilegeExpiredTs);
+                $data = [
+                    'sender_id'     =>Auth::id(),
+                    'receiver_u_id' =>$userId,
+                    'channel_name'  => $channelName,
+                    'receiver_token'=>$rtcToken1,
+                ];    
+
+                return $this->success($data,'Video call done');
+            }
+            return $this->error('Something went wrong','Something went wrong');
+        }catch(Exception $e){
+            return $this->error($e->getMessage(),'Exception occur');
+        }
+        return $this->error('Something went wrong','Something went wrong');
+    }
+
+    public function generateRandomChannel($length = 8) {
+        $characters = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+        $charactersLength = strlen($characters);
+        $randomString = '';
+        for ($i = 0; $i < $length; $i++) {
+            $randomString .= $characters[rand(0, $charactersLength - 1)];
+        }
+        return $randomString;
+    }
+
+    public function generateRandomUid($length = 9) {
+        $characters = '0123456789';
+        $charactersLength = strlen($characters);
+        $randomString = '';
+        for ($i = 0; $i < $length; $i++) {
+            $randomString .= $characters[rand(0, $charactersLength - 1)];
+        }
+        return $randomString;
     }
 
     // USER LOGOUT

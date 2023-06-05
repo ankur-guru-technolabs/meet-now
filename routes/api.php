@@ -37,5 +37,6 @@ Route::middleware('auth:api')->group(function () {
     Route::get('who-viewed-me', [CustomerController::class,'whoViewedMe'])->name('who-viewed-me');
     Route::get('who-likes-me', [CustomerController::class,'whoLikesMe'])->name('who-likes-me');
     Route::post('update-location', [CustomerController::class,'updateLocation'])->name('update-location');
+	Route::post('single-video-call', [CustomerController::class,'singleVideoCall'])->name('single-video-call');
     Route::get('log-out', [CustomerController::class,'logout'])->name('log-out');
 });
