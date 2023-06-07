@@ -74,7 +74,7 @@ class CustomerController extends BaseController
                 'interested_gender'     => 'required',
                 'birth_date' => 'required',
                 'media'      => 'sometimes|required',
-                'media.*'   => 'sometimes|required|file|mimes:jpeg,png,jpg,mp4,mov,avi|max:10240',
+                'media.*'   => 'sometimes|required|file|mimes:jpeg,png,jpg,mp4,mov,avi|max:100000',
                 'thumbnail_image' => 'sometimes|file|mimes:jpeg,png,jpg',
                 'hobbies' => [
                     'required',
@@ -395,7 +395,7 @@ class CustomerController extends BaseController
                                     ->where('receiver_id',Auth::id())
                                     ->select('chats.id', 'chats.match_id','chats.sender_id','chats.receiver_id','chats.read_status')
                                     ->selectRaw('MAX(chats.message) as last_message')
-                                    ->selectRaw('(SELECT COUNT(*) FROM chats AS sub_chats WHERE sub_chats.match_id = chats.match_id AND sub_chats.read_status = 0) as unread_message_count')
+                                    ->selectRaw('(SELECT COUNT(*) FROM chats AS sub_chats WHERE sub_chats.match_id = chats.match_id AND sub_chats.read_status = 0 AND sub_chats.receiver_id = '.Auth::id().') as unread_message_count')
                                     ->leftJoin('user_likes as ul', function ($join) {
                                         $join->on('chats.match_id', '=', 'ul.match_id');
                                     })

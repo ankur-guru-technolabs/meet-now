@@ -204,7 +204,7 @@ class AuthController extends BaseController
                 'media'     => 'required',
                 'birth_date' => 'required',
                 'media'      => 'required|array|min:3',
-                'media.*'    => 'required|file|mimes:jpeg,png,jpg,mp4,mov,avi|max:10240',
+                'media.*'    => 'required|file|mimes:jpeg,png,jpg,mp4,mov,avi|max:100000',
                 'thumbnail_image' => 'sometimes|file|mimes:jpeg,png,jpg',
                 'hobbies' => [
                     'required',
