@@ -93,12 +93,17 @@ class CustomerController extends BaseController
 
             $user_data = User::where('id',Auth::id())->first();
 
+            $otp = 0;
             if($user_data){
                 if($user_data->email != $request->email){
                     // $user_data->email_verified = 0;
                     // $user_data->otp_verified = 0;
                     // $user_data->save();
-                    (new AuthController)->sendOtp($request);
+                    $response = (new AuthController)->sendOtp($request);
+                    $data11 = json_decode($response->getContent(), true);  
+                    if ($data11 && isset($data11['data']['otp'])) {
+                        $otp = (int)$data11['data']['otp'];  
+                    } 
                 }
                 if($user_data->birth_date != $request->birth_date){
                     $birthdayDate = new DateTime($request->birth_date);
@@ -184,6 +189,9 @@ class CustomerController extends BaseController
                 $user_data->new_email = null;
                 if($user_data->email != $request->email){
                     $user_data->new_email = $request->email;
+                    if($otp > 0){
+                        $user_data->otp = $otp;
+                    }
                 }
                 return $this->success($user_data,'You profile successfully updated');
             }
