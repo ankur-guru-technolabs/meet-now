@@ -68,8 +68,8 @@
   --bs-border-radius-xl: 0.75rem;
   --bs-border-radius-2xl: 1rem;
   --bs-border-radius-pill: 50rem;
-  --bs-link-color: #e91e63;
-  --bs-link-hover-color: #e91e63;
+  --bs-link-color: #348eed;
+  --bs-link-hover-color: #348eed;
   --bs-code-color: #d63384;
   --bs-highlight-bg: #fcf8e3;
 }
@@ -22096,7 +22096,7 @@ body.dark-version {
 .input-group.input-group-dynamic .form-control:focus,
 .input-group.input-group-static .form-control,
 .input-group.input-group-static .form-control:focus {
-  background-image: linear-gradient(0deg, #e91e63 2px, rgba(156, 39, 176, 0) 0), linear-gradient(0deg, #d2d2d2 1px, rgba(209, 209, 209, 0) 0);
+  background-image: linear-gradient(0deg, #348eed 2px, rgba(156, 39, 176, 0) 0), linear-gradient(0deg, #d2d2d2 1px, rgba(209, 209, 209, 0) 0);
   border-radius: 0 !important;
 }
 
@@ -22108,7 +22108,7 @@ body.dark-version {
 .input-group.input-group-dynamic .form-control[disabled],
 .input-group.input-group-static .form-control[disabled] {
   cursor: not-allowed;
-  background-image: linear-gradient(0deg, #e91e63 2px, rgba(156, 39, 176, 0) 0), linear-gradient(0deg, #f0f2f5 1px, rgba(209, 209, 209, 0) 0) !important;
+  background-image: linear-gradient(0deg, #348eed 2px, rgba(156, 39, 176, 0) 0), linear-gradient(0deg, #f0f2f5 1px, rgba(209, 209, 209, 0) 0) !important;
 }
 
 .input-group.input-group-dynamic .input-group-text,
@@ -22130,7 +22130,7 @@ body.dark-version {
 
 .input-group.input-group-dynamic.is-focused label,
 .input-group.input-group-static.is-focused label {
-  color: #e91e63;
+  color: #348eed;
 }
 
 .input-group.input-group-dynamic.is-focused.is-valid label,
@@ -22244,9 +22244,9 @@ body.dark-version {
 
 .input-group.input-group-outline.is-focused .form-label+.form-control,
 .input-group.input-group-outline.is-filled .form-label+.form-control {
-  border-color: #e91e63 !important;
+  border-color: #348eed !important;
   border-top-color: transparent !important;
-  box-shadow: inset 1px 0 #e91e63, inset -1px 0 #e91e63, inset 0 -1px #e91e63;
+  box-shadow: inset 1px 0 #348eed, inset -1px 0 #348eed, inset 0 -1px #348eed;
 }
 
 .input-group.input-group-outline.is-focused .form-label,
@@ -22254,7 +22254,7 @@ body.dark-version {
   width: 100%;
   height: 100%;
   font-size: 0.6875rem !important;
-  color: #e91e63;
+  color: #348eed;
   display: flex;
   line-height: 1.25 !important;
 }
@@ -22270,8 +22270,8 @@ body.dark-version {
 .input-group.input-group-outline.is-focused .form-label:after,
 .input-group.input-group-outline.is-filled .form-label:before,
 .input-group.input-group-outline.is-filled .form-label:after {
-  border-top-color: #e91e63;
-  box-shadow: inset 0 1px #e91e63;
+  border-top-color: #348eed;
+  box-shadow: inset 0 1px #348eed;
 }
 
 .input-group.input-group-outline.is-valid .form-control {
@@ -23201,7 +23201,7 @@ hr.horizontal.gray-light {
 
 .choices .choices__list.choices__list--single,
 .choices .choices__list.choices__list--single:focus {
-  background-image: linear-gradient(0deg, #e91e63 2px, rgba(156, 39, 176, 0) 0), linear-gradient(0deg, #d2d2d2 1px, rgba(209, 209, 209, 0) 0);
+  background-image: linear-gradient(0deg, #348eed 2px, rgba(156, 39, 176, 0) 0), linear-gradient(0deg, #d2d2d2 1px, rgba(209, 209, 209, 0) 0);
 }
 
 .choices .choices__list.choices__list--dropdown {

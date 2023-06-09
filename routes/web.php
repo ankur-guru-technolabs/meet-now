@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Admin\AdminController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\LoginController;
@@ -27,6 +28,21 @@ Route::post('/login-admin', [LoginController::class, 'login'])->name('login-admi
 Route::middleware(['admin'])->group(function () {
 
     Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
+
+    Route::group(['prefix' => 'questions','as'=>'questions.'], function () {
+        Route::group(['prefix' => 'gender','as'=>'gender.'], function () {
+            Route::get('list', [AdminController::class, 'genderList'])->name('list');
+            Route::post('store', [AdminController::class, 'genderStore'])->name('store');
+            Route::post('update', [AdminController::class, 'genderUpdate'])->name('update');
+            Route::get('delete/{id}', [AdminController::class, 'genderDelete'])->name('delete');
+        });
+        Route::group(['prefix' => 'hobby','as'=>'hobby.'], function () {
+            Route::get('list', [AdminController::class, 'hobbyList'])->name('list');
+            Route::post('store', [AdminController::class, 'hobbyStore'])->name('store');
+            Route::post('update', [AdminController::class, 'hobbyUpdate'])->name('update');
+            Route::get('delete/{id}', [AdminController::class, 'hobbyDelete'])->name('delete');
+        });
+    });
 
     Route::group(['prefix' => 'users','as'=>'users.'], function () {
         Route::get('list', [UserController::class, 'list'])->name('list');

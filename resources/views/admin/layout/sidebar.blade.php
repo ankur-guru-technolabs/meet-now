@@ -29,6 +29,28 @@
                 </a>
             </li>
             <li class="nav-item">
+                <a data-bs-toggle="collapse" href="#question_management_menu" class="nav-link text-white {{ isActivePrefix('questions','active') }}" aria-controls="question_management_menu" role="button" aria-expanded="{{ isActivePrefix('questions','true') }}">
+                    <i class="material-icons-round opacity-10">quiz</i>
+                    <span class="nav-link-text ms-2 ps-1">Question Handling</span>
+                </a>
+                <div class="collapse {{ isActivePrefix('questions','show') }}" id="question_management_menu">
+                    <ul class="nav ">
+                        <li class="nav-item {{isActive('questions.gender.list')}}">
+                            <a class="nav-link text-white {{isActive('questions.gender.list')}}" href="{{route('questions.gender.list')}}">
+                                <img class="menu-img-class" src="{{ asset('images/genders.png') }}">
+                                <span class="sidenav-normal  ms-2  ps-1">Genders</span>
+                            </a>
+                        </li>
+                        <li class="nav-item {{isActive('questions.hobby.list')}}">
+                            <a class="nav-link text-white {{isActive('questions.hobby.list')}}" href="{{route('questions.hobby.list')}}">
+                                <img class="menu-img-class" src="{{ asset('images/hobbies.png') }}">
+                                <span class="sidenav-normal  ms-2  ps-1">Hobbies</span>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </li>
+            <li class="nav-item">
                 <a data-bs-toggle="collapse" href="#users_menu" class="nav-link text-white {{ isActivePrefix('users','active') }}" aria-controls="users_menu" role="button" aria-expanded="{{ isActivePrefix('users','true') }}">
                     <i class="material-icons-round opacity-10">group</i>
                     <span class="nav-link-text ms-2 ps-1">Users</span>

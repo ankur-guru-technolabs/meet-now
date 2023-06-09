@@ -27,7 +27,8 @@ class CustomerController extends BaseController
 
     public function getProfile(Request $request){
         try{ 
-            $data['user']   =  User::with('media')->find($request->id);
+            $id = isset($request->id) ? $request->id : Auth::id();
+            $data['user']   =  User::with('media')->find($id);
 
             $data['user']->media->map(function ($photo) {
                 $photo->append('profile_photo');
@@ -41,14 +42,14 @@ class CustomerController extends BaseController
             $data['user']['gender_new']                = Gender::where('id',$data['user']['gender'])->pluck('gender')->first();
             $data['user']['interested_gender_new']     = Gender::where('id',$data['user']['interested_gender'])->pluck('gender')->first();
 
-            if($request->id != Auth::id()){
+            if($id != Auth::id()){
                 
                 // Check user is already liked and then after view profile ? in that scnario no data will inserted
 
-                $user_likes = UserLikes::where('like_from',Auth::id())->where('like_to',$request->id)->first();
-                $user_view = UserView::where('view_from',Auth::id())->where('view_to',$request->id)->first();
+                $user_likes = UserLikes::where('like_from',Auth::id())->where('like_to',$id)->first();
+                $user_view = UserView::where('view_from',Auth::id())->where('view_to',$id)->first();
                 if(empty($user_likes) && empty($user_view)){
-                    UserView::create(['view_from'=>Auth::id(),'view_to'=> $request->id]);
+                    UserView::create(['view_from'=>Auth::id(),'view_to'=> $id]);
                 };
             }
             return $this->success($data,'User profile data');

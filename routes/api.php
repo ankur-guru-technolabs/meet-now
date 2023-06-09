@@ -23,7 +23,7 @@ Route::post('register', [AuthController::class, 'register'])->name('register');
 Route::post('email-exist', [AuthController::class, 'emailExist'])->name('email-exist');
  
 Route::middleware('auth:api')->group(function () {
-    Route::get('get-user-profile/{id}', [CustomerController::class,'getProfile'])->name('get-user-profile');
+    Route::get('get-user-profile/{id?}', [CustomerController::class,'getProfile'])->name('get-user-profile');
     Route::get('get-filter-data', [CustomerController::class,'getFilterData'])->name('get-filter-data');
     Route::post('update-user-profile', [CustomerController::class,'updateProfile'])->name('update-user-profile');
     Route::post('swipe-profile', [CustomerController::class,'swipeProfile'])->name('swipe-profile');

@@ -268,3 +268,105 @@
 <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
 <script src="https://cdn.jsdelivr.net/jquery.validation/1.16.0/jquery.validate.min.js"></script>
 <script src="https://cdn.jsdelivr.net/jquery.validation/1.16.0/additional-methods.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/js/toastr.min.js"></script>
+<script>
+    $(document).ready(function() {
+        var addInputFields = $('#addForm input[type="text"]');
+        var editInputFields = $('#editForm input[type="text"]');
+        var addErrorMessage = $('.add-error-message');
+        var editErrorMessage = $('.edit-error-message');
+        addInputFields.on('input', function() {
+            addErrorMessage.text(''); 
+        });
+        editInputFields.on('input', function() {
+            editErrorMessage.text(''); 
+        });
+    });
+
+    $('#editModal').on('show.bs.modal', function(event) {
+        var button = $(event.relatedTarget);
+        var age = button.data('value');
+        var input = $('.editInput');
+        input.val(age);
+        var id = button.data('id');
+        var inputId = $('.editId');
+        inputId.val(id);
+        $('.modal-body #editForm .input-group').addClass('focused is-focused is-filled');
+    });
+    $('#addModal').on('hidden.bs.modal', function(e) {
+        $('#addForm')[0].reset();
+        $('.modal-body .input-group').removeClass('is-filled');
+        $('.add-error-message').text('');
+    });
+    $('#editModal').on('hidden.bs.modal', function(e) {
+        $('#editForm')[0].reset();
+        $('.edit-error-message').text('');
+    });
+    $('#addModal .modal-footer button').click(function() {
+        var form = $('#addForm');
+        if (form[0].checkValidity()) {
+            form.submit();
+        } else {
+            var invalidElement = $(form).find(':invalid')[0];
+            $(invalidElement).addClass('is-invalid');
+            // $(invalidElement).next('.error-message').text('Please enter a valid value.');
+            $('.add-error-message').text('Please enter a valid value.');
+
+            event.preventDefault();
+            event.stopPropagation();
+        }
+    });
+    $('#editModal .modal-footer button').click(function() {
+        var form = $('#editForm');
+        if (form[0].checkValidity()) {
+            form.submit();
+        } else {
+            var invalidElement = $(form).find(':invalid')[0];
+            $(invalidElement).addClass('is-invalid');
+            // $(invalidElement).next('.error-message').text('Please enter a valid value.');
+            $('.edit-error-message').text('Please enter a valid value.');
+
+            event.preventDefault();
+            event.stopPropagation();
+        }
+    });
+</script>
+@if(Session::has('message'))
+    <script>
+        toastr.options = {
+            "closeButton": true,
+            "progressBar": true
+        }
+        toastr.success("{{ Session::get('message') }}");
+    </script>
+@endif
+
+@if(Session::has('error'))
+    <script>
+        toastr.options = {
+            "closeButton": true,
+            "progressBar": true
+        }
+        toastr.error("{{ Session::get('error') }}");
+    </script>
+@endif
+
+@if(Session::has('info'))
+    <script>
+        toastr.options = {
+            "closeButton": true,
+            "progressBar": true
+        }
+        toastr.info("{{ Session::get('info') }}");
+    </script>
+@endif
+
+@if(Session::has('warning'))
+    <script>
+        toastr.options = {
+            "closeButton": true,
+            "progressBar": true
+        }
+        toastr.warning("{{ Session::get('warning') }}");
+    </script>
+@endif
