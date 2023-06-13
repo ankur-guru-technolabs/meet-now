@@ -34,8 +34,10 @@ Route::middleware('auth:api')->group(function () {
     Route::post('send-message', [CustomerController::class,'sendMessage'])->name('send-message');
     Route::post('unmatch', [CustomerController::class,'unmatch'])->name('unmatch');
     Route::post('report', [CustomerController::class,'report'])->name('report');
+    Route::post('contact-support', [CustomerController::class,'contactSupport'])->name('contact-support');
     Route::get('who-viewed-me', [CustomerController::class,'whoViewedMe'])->name('who-viewed-me');
     Route::get('who-likes-me', [CustomerController::class,'whoLikesMe'])->name('who-likes-me');
+    Route::get('get-static-page', [CustomerController::class,'staticPage'])->name('get-static-page');
     Route::post('update-location', [CustomerController::class,'updateLocation'])->name('update-location');
 	Route::post('single-video-call', [CustomerController::class,'singleVideoCall'])->name('single-video-call');
     Route::get('log-out', [CustomerController::class,'logout'])->name('log-out');

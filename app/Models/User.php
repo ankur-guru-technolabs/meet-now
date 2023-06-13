@@ -37,6 +37,7 @@ class User extends Authenticatable
         'email_verified',
         'phone_verified',
         'otp_verified',
+        'is_hide_profile',
         'password',
     ];
 

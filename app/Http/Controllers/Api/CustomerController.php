@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use Illuminate\Support\Facades\File;
 use App\Http\Controllers\BaseController;
-use App\Http\Controllers\API\AuthController;
+use App\Http\Controllers\Api\AuthController;
 use App\Models\Chat;
 use App\Models\Gender;
 use App\Models\Hobby;
@@ -16,6 +16,8 @@ use App\Models\UserReport;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Lib\RtcTokenBuilder;
+use App\Models\ContactSupport;
+use App\Models\Setting;
 use DateTime;
 use Exception;
 use Helper; 
@@ -139,30 +141,30 @@ class CustomerController extends BaseController
                         };
                     }
                     UserPhoto::whereIn('id', $request->image)->where('user_id',$request->user_id)->where('type','!=','thumbnail_image')->delete();
-                    
-                    if($request->hasFile('media')){
-                        $medias = $request->file('media');
-                      
-                        foreach ($medias as $photo) {
-                            $extension  = $photo->getClientOriginalExtension();
-                            $filename = 'User_'.$user_data->id.'_'.random_int(10000, 99999). '.' . $extension;
-                            $photo->move(public_path('user_profile'), $filename);
-    
-                            if ($extension == 'jpg' || $extension == 'jpeg' || $extension == 'png') {
-                                $user_photo_data['type'] = 'image';
-                            } elseif ($extension == 'mp4' || $extension == 'avi' || $extension == 'mov') {
-                                $user_photo_data['type'] = 'video';
-                            } 
-                            $user_photo_data['user_id'] = $user_data->id;
-                            $user_photo_data['name'] = $filename;
-                            UserPhoto::create($user_photo_data);
-                        }
+                }
+
+                if($request->hasFile('media')){
+                    $medias = $request->file('media');
+                  
+                    foreach ($medias as $photo) {
+                        $extension  = $photo->getClientOriginalExtension();
+                        $filename = 'User_'.$user_data->id.'_'.random_int(10000, 99999). '.' . $extension;
+                        $photo->move(public_path('user_profile'), $filename);
+
+                        if ($extension == 'jpg' || $extension == 'jpeg' || $extension == 'png') {
+                            $user_photo_data['type'] = 'image';
+                        } elseif ($extension == 'mp4' || $extension == 'avi' || $extension == 'mov') {
+                            $user_photo_data['type'] = 'video';
+                        } 
+                        $user_photo_data['user_id'] = $user_data->id;
+                        $user_photo_data['name'] = $filename;
+                        UserPhoto::create($user_photo_data);
                     }
                 }
 
                 if(isset($request->is_thumbnail_change) && $request->is_thumbnail_change == 1){
                     $user_old_thumbnail_name = UserPhoto::where('user_id',$request->user_id)->where('type','thumbnail_image')->pluck('name')->toArray();
-                    $path = public_path('user_profile/' . $user_old_thumbnail_name);
+                    $path = public_path('user_profile/' . $user_old_thumbnail_name[0]);
                     if (File::exists($path)) {
                         if (!is_writable($path)) {
                             chmod($path, 0777);
@@ -306,6 +308,7 @@ class CustomerController extends BaseController
             }
             $data['user_list'] = User::where('users.id', '!=', Auth::id())
                                 ->where('user_type', 'user')
+                                ->where('is_hide_profile', 0)
                                 ->where('gender', $request->interested_gender)
                                 ->where('interested_gender', Auth::user()->gender)
                                 ->whereBetween('age', [$request->min_age, $request->max_age])
@@ -533,6 +536,33 @@ class CustomerController extends BaseController
         }
         return $this->error('Something went wrong','Something went wrong');
     }
+   
+    // CONTACTSUPPORT 
+
+    public function contactSupport(Request $request){
+        try{
+            $validateData = Validator::make($request->all(), [
+                'name' => 'required',
+                'email' => 'required',
+                'description' => 'required',
+            ]);
+
+            if ($validateData->fails()) {
+                return $this->error($validateData->errors(),'Validation error',403);
+            }
+           
+            $support                = new ContactSupport();
+            $support->name          = $request->name;
+            $support->email         = $request->email;
+            $support->description   = $request->description;
+            $support->save();
+
+            return $this->success([],'Request added successfully');
+        }catch(Exception $e){
+            return $this->error($e->getMessage(),'Exception occur');
+        }
+        return $this->error('Something went wrong','Something went wrong');
+    }
 
     // WHO LIKES ME LISTING
 
@@ -565,6 +595,18 @@ class CustomerController extends BaseController
             $data['total']        = $user_likes_listing->total();
             $data['last_page']    = $user_likes_listing->lastPage();
             return $this->success($data,'Who likes me listing');
+        }catch(Exception $e){
+            return $this->error($e->getMessage(),'Exception occur');
+        }
+        return $this->error('Something went wrong','Something went wrong');
+    }
+   
+    // STATIC PAGE DATA
+
+    public function staticPage(Request $request){
+        try{
+            $data['static_page_data']  = Setting::all();
+            return $this->success($data,'Static page data');
         }catch(Exception $e){
             return $this->error($e->getMessage(),'Exception occur');
         }

@@ -43,10 +43,20 @@ Route::middleware(['admin'])->group(function () {
             Route::get('delete/{id}', [AdminController::class, 'hobbyDelete'])->name('delete');
         });
     });
-
+    
     Route::group(['prefix' => 'users','as'=>'users.'], function () {
         Route::get('list', [UserController::class, 'list'])->name('list');
         Route::post('status/update', [UserController::class, 'updateStatus'])->name('status-update');
+    });
+    
+    Route::group(['prefix' => 'feedback','as'=>'feedback.'], function () {
+        Route::get('list', [AdminController::class, 'feedbackList'])->name('list');
+    });
+    
+    Route::group(['prefix' => 'static-pages','as'=>'static-pages.'], function () {
+        Route::get('list', [AdminController::class, 'staticPagesList'])->name('list');
+        Route::get('page-edit/{id}', [AdminController::class, 'pageEdit'])->name('page-edit');
+        Route::post('page-update', [AdminController::class, 'pageUpdate'])->name('page-update');
     });
 
 });

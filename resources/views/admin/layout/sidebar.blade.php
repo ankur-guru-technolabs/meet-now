@@ -10,6 +10,9 @@
     @php
 
         function isActivePrefix($routeName,$className) {
+            if (Str::startsWith(Route::getCurrentRoute()->getPrefix(), 'questions/') && $routeName == "questions") {
+                return $className;
+            }
             return trim(Route::getCurrentRoute()->getPrefix(), '/') == $routeName ? $className : '';
         }
 
@@ -65,6 +68,38 @@
                         </li> -->
                         <li class="nav-item {{isActive('users.list')}}">
                             <a class="nav-link text-white {{isActive('users.list')}}" href="{{route('users.list')}}">
+                                <i class="material-icons opacity-10">list_alt</i>
+                                <span class="sidenav-normal  ms-2  ps-1">List</span>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </li>
+            <li class="nav-item">
+                <a data-bs-toggle="collapse" href="#feedback_menu" class="nav-link text-white {{ isActivePrefix('feedback','active') }}" aria-controls="feedback_menu" role="button" aria-expanded="{{ isActivePrefix('feedback','true') }}">
+                    <i class="material-icons-round opacity-10">chat_bubble</i>
+                    <span class="nav-link-text ms-2 ps-1">Feedback</span>
+                </a>
+                <div class="collapse {{ isActivePrefix('feedback','show') }}" id="feedback_menu">
+                    <ul class="nav ">
+                        <li class="nav-item {{isActive('feedback.list')}}">
+                            <a class="nav-link text-white {{isActive('feedback.list')}}" href="{{route('feedback.list')}}">
+                                <i class="material-icons opacity-10">list_alt</i>
+                                <span class="sidenav-normal  ms-2  ps-1">List</span>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </li>
+            <li class="nav-item">
+                <a data-bs-toggle="collapse" href="#static_menu" class="nav-link text-white {{ isActivePrefix('static-pages','active') }}" aria-controls="static_menu" role="button" aria-expanded="{{ isActivePrefix('static-pages','true') }}">
+                    <i class="material-icons-round opacity-10">description</i>
+                    <span class="nav-link-text ms-2 ps-1">Static Pages</span>
+                </a>
+                <div class="collapse {{ isActivePrefix('static-pages','show') }}" id="static_menu">
+                    <ul class="nav ">
+                        <li class="nav-item {{isActive('static-pages.list')}}">
+                            <a class="nav-link text-white {{isActive('static-pages.list')}}" href="{{route('static-pages.list')}}">
                                 <i class="material-icons opacity-10">list_alt</i>
                                 <span class="sidenav-normal  ms-2  ps-1">List</span>
                             </a>
