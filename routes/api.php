@@ -40,5 +40,8 @@ Route::middleware('auth:api')->group(function () {
     Route::get('get-static-page', [CustomerController::class,'staticPage'])->name('get-static-page');
     Route::post('update-location', [CustomerController::class,'updateLocation'])->name('update-location');
 	Route::post('single-video-call', [CustomerController::class,'singleVideoCall'])->name('single-video-call');
+    Route::get('get-notification-list', [CustomerController::class,'notificationList'])->name('get-notification-list');
+    Route::get('notification-read', [CustomerController::class,'notificationRead'])->name('notification-read');
+    Route::get('notification-setting', [CustomerController::class,'notificationSetting'])->name('notification-setting');
     Route::get('log-out', [CustomerController::class,'logout'])->name('log-out');
 });

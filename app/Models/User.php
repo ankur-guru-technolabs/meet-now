@@ -38,6 +38,7 @@ class User extends Authenticatable
         'phone_verified',
         'otp_verified',
         'is_hide_profile',
+        'is_notification_mute',
         'password',
     ];
 
@@ -69,6 +70,7 @@ class User extends Authenticatable
         'phone_verified'=> 'int',
         'otp_verified'=> 'int',
         'email_verified_at' => 'datetime',
+        'is_notification_mute'=> 'int', 
     ];
 
     public function media()

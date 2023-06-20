@@ -13,11 +13,12 @@ use App\Models\UserLikes;
 use App\Models\UserPhoto;
 use App\Models\UserView;
 use App\Models\UserReport;
+use App\Models\ContactSupport;
+use App\Models\Notification;
+use App\Models\Setting;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Lib\RtcTokenBuilder;
-use App\Models\ContactSupport;
-use App\Models\Setting;
 use DateTime;
 use Exception;
 use Helper; 
@@ -365,8 +366,7 @@ class CustomerController extends BaseController
     
     public function matchedUserList(Request $request){
         try{
-            $matched_user_listing = UserLikes::with(['users:id,name', 'users.media:id,user_id,name,type'])
-                                        ->where('user_likes.like_to',Auth::id())
+            $matched_user_listing = UserLikes::where('user_likes.like_to',Auth::id())
                                         ->where('user_likes.status',1)
                                         ->where('user_likes.match_status',1)
                                         ->where('user_likes.match_id','>',0)
@@ -403,8 +403,7 @@ class CustomerController extends BaseController
     
     public function chatList(Request $request){
         try{
-            $chat_list          =   Chat::with(['users:id,name', 'users.media:id,user_id,name,type'])
-                                    ->where('receiver_id',Auth::id())
+            $chat_list          =   Chat::where('receiver_id',Auth::id())
                                     ->select('chats.id', 'chats.match_id','chats.sender_id','chats.receiver_id','chats.read_status')
                                     ->selectRaw('MAX(chats.message) as last_message')
                                     ->selectRaw('(SELECT COUNT(*) FROM chats AS sub_chats WHERE sub_chats.match_id = chats.match_id AND sub_chats.read_status = 0 AND sub_chats.receiver_id = '.Auth::id().') as unread_message_count')
@@ -568,8 +567,7 @@ class CustomerController extends BaseController
 
     public function whoLikesMe(Request $request){
         try{
-            $user_likes_listing = UserLikes::with(['users:id,name,age', 'users.media:id,user_id,name,type'])
-                                        ->where('user_likes.like_to',Auth::id())
+            $user_likes_listing = UserLikes::where('user_likes.like_to',Auth::id())
                                         ->where('user_likes.status',1)
                                         ->where('user_likes.match_status',2)
                                         ->select('user_likes.id', 'user_likes.like_from','user_likes.like_to')
@@ -617,8 +615,7 @@ class CustomerController extends BaseController
 
     public function whoViewedMe(Request $request){
         try{
-            $user_view_listing = UserView::with(['users:id,name,age', 'users.media:id,user_id,name,type'])
-                                        ->where('user_views.view_to',Auth::id())
+            $user_view_listing = UserView::where('user_views.view_to',Auth::id())
                                         ->select('user_views.id', 'user_views.view_from','user_views.view_to')
                                         ->paginate($request->input('perPage'), ['*'], 'page', $request->input('page'));
 
@@ -734,6 +731,74 @@ class CustomerController extends BaseController
             $randomString .= $characters[rand(0, $charactersLength - 1)];
         }
         return $randomString;
+    }
+
+    // NOTIFICATION LIST
+
+    public function notificationList(Request $request){
+        try{
+            $notification_id  = Notification::where('receiver_id',Auth::id())->orderBy('id','desc')->take(30)->pluck('id')->toArray();
+            Notification::whereNotIn('id', $notification_id)->where('receiver_id',Auth::id())->delete();
+            
+            $notification_data  = Notification::where('receiver_id',Auth::id())->orderBy('id','desc')->take(30)->get();
+            $data['notification_data'] = $notification_data->map(function ($notification){
+                $date = date('d/m/Y', strtotime($notification->created_at));
+
+                if($date == date('d/m/Y')) {
+                    $notification->date = 'Today';
+                }else if($date == date('d/m/Y', strtotime('-1 day'))) {
+                    $notification->date = 'Yesterday';
+                }else{
+                    $notification->date = date('d M', strtotime($notification->created_at));
+                } 
+
+                $profile_photo_media = $notification->notificationSender->first()->media->firstWhere('type', 'image');
+                $notification->name = $notification->notificationSender->first()->name;
+                $notification->profile_photo = $profile_photo_media->profile_photo;
+                unset($notification->notificationSender);
+                
+                return $notification;
+            })->values();
+            return $this->success($data,'Notification data');
+        }catch(Exception $e){
+            return $this->error($e->getMessage(),'Exception occur');
+        }
+        return $this->error('Something went wrong','Something went wrong');
+    }
+
+    // NOTIFICATION READ
+
+     public function notificationRead(){
+        return $this->success([],'Notification read successfully');
+        try{
+            Notification::where('receiver_id',Auth::id())->update(['status'=>1]);
+            return $this->success([],'Notification read successfully');
+        }catch(Exception $e){
+            return $this->error($e->getMessage(),'Exception occur');
+        }
+        return $this->error('Something went wrong','Something went wrong');
+    }
+        
+    // NOTIFICATION SETTING
+
+    public function notificationSetting(){
+        try{
+            $user_data = User::where('id',Auth::id())->first();
+            if($user_data['is_notification_mute'] == '0'){
+                $user_data['is_notification_mute'] = '1';
+                $user_data->save();
+                return $this->success([],'Notification disable successfully');
+            }
+
+            if($user_data['is_notification_mute'] == 1){
+                $user_data['is_notification_mute'] = 0;
+                $user_data->save();
+                return $this->success([],'Notification enable successfully');
+            }
+        }catch(Exception $e){
+            return $this->error($e->getMessage(),'Exception occur');
+        }
+        return $this->error('Something went wrong','Something went wrong');
     }
 
     // USER LOGOUT

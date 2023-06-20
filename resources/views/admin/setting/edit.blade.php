@@ -1,5 +1,5 @@
 @extends('admin.layout.app')
-@section('title', 'Static Page List')
+@section('title', 'Static Page Edit')
 @section('content')
 
 <div class="container-fluid py-4">
