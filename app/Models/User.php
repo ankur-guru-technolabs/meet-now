@@ -39,6 +39,7 @@ class User extends Authenticatable
         'otp_verified',
         'is_hide_profile',
         'is_notification_mute',
+        'fcm_token',
         'password',
     ];
 

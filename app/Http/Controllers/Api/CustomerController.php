@@ -53,6 +53,12 @@ class CustomerController extends BaseController
                 $user_view = UserView::where('view_from',Auth::id())->where('view_to',$id)->first();
                 if(empty($user_likes) && empty($user_view)){
                     UserView::create(['view_from'=>Auth::id(),'view_to'=> $id]);
+
+                    // Notification for profile view
+
+                    $title = "Your profile has been viewed by ".Auth::user()->name;
+                    $message = "Your profile has been viewed by ".Auth::user()->name; 
+                    Helper::send_notification('single', Auth::id(), $id, $title, 'user_view', $message, []);
                 };
             }
             return $this->success($data,'User profile data');
@@ -266,6 +272,19 @@ class CustomerController extends BaseController
                 
                 UserLikes::where('like_from',$input['like_to'])->where('like_to',$input['like_from'])->where('status',$input['status'])->update(
                     ['match_id' => $input['match_id'],'match_status' => $input['match_status'],'matched_at' => $input['matched_at']]);
+                
+                // Notification for match profile both side
+                
+                $title = "Congrats! You have a match with ".Auth::user()->name;
+                $message = "Congrats! You have a match with ".Auth::user()->name; 
+                Helper::send_notification('single', Auth::id(), $input['like_to'], $title, 'match', $message, []);
+
+                // Notification for match profile both side
+
+                $receiver_data = User::where('id',$input['like_to'])->first();
+                $title = "Congrats! You have a match with ". $receiver_data['name'];
+                $message = "Congrats! You have a match with ". $receiver_data['name']; 
+                Helper::send_notification('single', $input['like_to'], Auth::id(), $title, 'match', $message, []);
             }
 
             if(!$same_request){
@@ -280,6 +299,12 @@ class CustomerController extends BaseController
                 UserView::where('view_from',$input['like_to'])->where('view_to',Auth::id())->delete();
 
                 UserLikes::create($input);
+
+                // Notification for profile like
+
+                $title = "You profile is liked by ".Auth::user()->name;
+                $message = "You profile is liked by ".Auth::user()->name; 
+                Helper::send_notification('single', Auth::id(), $input['like_to'], $title, 'like', $message, []);
             }
 
             return $this->success([],'Profile liked successfully');
@@ -477,6 +502,12 @@ class CustomerController extends BaseController
             $chats->receiver_id = $request->receiver_id;
             $chats->message     = $request->message;
             $chats->save();
+
+            // Notification for message send
+
+            $title = Auth::user()->name." sent you a message";
+            $message = Auth::user()->name." sent you a message"; 
+            Helper::send_notification('single', Auth::id(), $request->receiver_id, $title, 'message', $message, []);
 
             return $this->success([],'Message send successfully');
         }catch(Exception $e){
@@ -704,6 +735,12 @@ class CustomerController extends BaseController
                     'receiver_token'=>$rtcToken1,
                 ];    
 
+                // Notification for video call
+
+                $title = "You have a video call request from ".Auth::user()->name;
+                $message = "You have a video call request from ".Auth::user()->name; 
+                Helper::send_notification('single', Auth::id(), $request->receiver_id, $title, 'video_call', $message, []);
+
                 return $this->success($data,'Video call done');
             }
             return $this->error('Something went wrong','Something went wrong');
@@ -731,6 +768,27 @@ class CustomerController extends BaseController
             $randomString .= $characters[rand(0, $charactersLength - 1)];
         }
         return $randomString;
+    }
+
+    // FCM TOKEN SET
+
+    public function updateFcmToken(Request $request){
+        try{
+            $validateData = Validator::make($request->all(), [
+                'fcm_token' => 'required',
+            ]);
+
+            if ($validateData->fails()) {
+                return $this->error($validateData->errors(),'Validation error',403);
+            }
+
+            User::where('id',Auth::id())->update(['fcm_token' => $request->fcm_token]);
+           
+            return $this->success([],'Token updated successfully');
+        }catch(Exception $e){
+            return $this->error($e->getMessage(),'Exception occur');
+        }
+        return $this->error('Something went wrong','Something went wrong');
     }
 
     // NOTIFICATION LIST
@@ -806,9 +864,10 @@ class CustomerController extends BaseController
     public function logout(){
         try{
             if (Auth::user()) {
+                User::where('id',Auth::id())->update(['fcm_token' => null]);
                 $user = Auth::user()->token();
                 $user->revoke();
-                return $this->success([],'You are succseefully logout');
+                return $this->success([],'You are successfully logout');
             }
             return $this->error('Something went wrong','Something went wrong');
         }catch(Exception $e){

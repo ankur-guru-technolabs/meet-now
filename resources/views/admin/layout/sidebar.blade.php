@@ -107,6 +107,22 @@
                     </ul>
                 </div>
             </li>
+            <li class="nav-item">
+                <a data-bs-toggle="collapse" href="#notification_menu" class="nav-link text-white {{ isActivePrefix('notification','active') }}" aria-controls="notification_menu" role="button" aria-expanded="{{ isActivePrefix('notification','true') }}">
+                    <i class="material-icons-round opacity-10">notifications</i>
+                    <span class="nav-link-text ms-2 ps-1">Notifications</span>
+                </a>
+                <div class="collapse {{ isActivePrefix('notification','show') }}" id="notification_menu">
+                    <ul class="nav ">
+                        <li class="nav-item {{isActive('notification.index')}}">
+                            <a class="nav-link text-white {{isActive('notification.index')}}" href="{{route('notification.index')}}">
+                                <i class="material-icons opacity-10">send</i>
+                                <span class="sidenav-normal  ms-2  ps-1">Send</span>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </li>
         </ul>
     </div>
 </aside>

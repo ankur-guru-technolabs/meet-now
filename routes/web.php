@@ -59,6 +59,10 @@ Route::middleware(['admin'])->group(function () {
         Route::post('page-update', [AdminController::class, 'pageUpdate'])->name('page-update');
     });
 
+    Route::group(['prefix' => 'notification','as'=>'notification.'], function () {
+        Route::get('index', [AdminController::class, 'notificationIndex'])->name('index');
+        Route::post('send', [AdminController::class, 'notificationSend'])->name('send');
+    });
 });
 
 

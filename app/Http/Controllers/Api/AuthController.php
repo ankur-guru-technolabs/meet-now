@@ -161,6 +161,14 @@ class AuthController extends BaseController
                         if($user->email_verified == 1 && $user->phone_verified = 1 && $user->otp_verified == 1 && $request->type != 'edit'){
                             $data['token'] = $user->createToken('Auth token')->accessToken;
                         }
+                        
+                        if($user->email_verified == 1 && $user->phone_verified = 1 && $user->otp_verified == 1 && $request->type == 'register'){
+                            // Notification for welcome
+
+                            $title = "Welcome to Meet Now";
+                            $message = "Welcome to Meet Now"; 
+                            Helper::send_notification('single', 0, $user->id, $title, 'message', $message, []);
+                        }
                     } 
                     return $this->success($data,'OTP verified successfully');
                 }

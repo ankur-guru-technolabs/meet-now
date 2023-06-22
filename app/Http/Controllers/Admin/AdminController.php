@@ -9,6 +9,8 @@ use App\Models\Gender;
 use App\Models\Hobby;
 use App\Models\Setting;
 use Validator;
+use Helper; 
+use Auth;
 
 class AdminController extends BaseController
 {
@@ -108,6 +110,31 @@ class AdminController extends BaseController
         
         Setting::where('id',$request->id)->update($insert_data);
         return redirect()->route('static-pages.list')->with('message','Page updated Successfully'); 
+    }
+    
+    // NOTIFICATION
+
+    public function notificationIndex(){
+        return view('admin.notification.index');
+    }
+    
+    public function notificationSend(Request $request){
+
+        $validator = Validator::make($request->all(),[
+            'title'=>"required",
+            'message'=>"required",
+        ]);
+
+        if ($validator->fails())
+        {
+            return back()->withInput()->withErrors($validator);
+        }
+        
+        $title = $request->title;
+        $message = $request->message;
+        Helper::send_notification_by_admin($title, $message, []);
+
+        return view('admin.notification.index');
     }
     
 }
