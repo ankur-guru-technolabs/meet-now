@@ -159,6 +159,7 @@ class AuthController extends BaseController
                         }
 
                         if($user->email_verified == 1 && $user->phone_verified = 1 && $user->otp_verified == 1 && $request->type != 'edit'){
+                            $user->tokens()->delete();
                             $data['token'] = $user->createToken('Auth token')->accessToken;
                         }
                         
@@ -210,20 +211,21 @@ class AuthController extends BaseController
                 'longitude'  => 'required|numeric',
                 'gender'     => 'required',
                 'interested_gender'     => 'required',
-                'media'     => 'required',
+                'media'      => 'required',
                 'birth_date' => 'required',
                 'media'      => 'required|array|min:3',
                 'media.*'    => 'required|file|mimes:jpeg,png,jpg,mp4,mov,avi|max:100000',
                 'thumbnail_image' => 'sometimes|file|mimes:jpeg,png,jpg',
-                'hobbies' => [
-                    'required',
-                    function ($attribute, $value, $fail) {
-                        $numCommas = substr_count($value, ',');
-                        if ($numCommas > 2) {
-                            $fail('You can select max 3 '.$attribute);
-                        }
-                    },
-                ],
+                'hobbies'    => 'required',
+                // 'hobbies' => [
+                //     'required',
+                //     function ($attribute, $value, $fail) {
+                //         $numCommas = substr_count($value, ',');
+                //         if ($numCommas > 2) {
+                //             $fail('You can select max 3 '.$attribute);
+                //         }
+                //     },
+                // ],
             ]);
 
             if ($validateData->fails()) {

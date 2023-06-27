@@ -44,5 +44,9 @@ Route::middleware('auth:api')->group(function () {
     Route::get('get-notification-list', [CustomerController::class,'notificationList'])->name('get-notification-list');
     Route::get('notification-read', [CustomerController::class,'notificationRead'])->name('notification-read');
     Route::get('notification-setting', [CustomerController::class,'notificationSetting'])->name('notification-setting');
+    Route::get('subscription-list', [CustomerController::class,'subscriptionList'])->name('subscription-list');
+    Route::get('subscription-list', [CustomerController::class,'subscriptionList'])->name('subscription-list');
+    Route::post('purchase-subscription', [CustomerController::class,'purchaseSubscription'])->name('purchase-subscription');
+    Route::get('active-subscription-list', [CustomerController::class,'activeSubscriptionList'])->name('active-subscription-list');
     Route::get('log-out', [CustomerController::class,'logout'])->name('log-out');
 });

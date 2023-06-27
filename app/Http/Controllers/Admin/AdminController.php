@@ -8,6 +8,7 @@ use App\Models\ContactSupport;
 use App\Models\Gender;
 use App\Models\Hobby;
 use App\Models\Setting;
+use App\Models\Subscription;
 use Validator;
 use Helper; 
 use Auth;
@@ -136,5 +137,58 @@ class AdminController extends BaseController
 
         return view('admin.notification.index');
     }
+
+    // SUBSCRIPTION
+
+    public function subscriptionList(){
+        $subscription = Subscription::all();
+        return view('admin.subscription.list',compact('subscription'));
+    }
     
+    public function subscriptionEdit($id){
+        $subscription = Subscription::where('id',$id)->first();
+        $subscription['allowed_subscription'] = explode(',',$subscription->search_filters);
+        return view('admin.subscription.edit',compact('subscription'));
+    }
+    
+    public function subscriptionUpdate(Request $request){
+        
+        $validator = Validator::make($request->all(),[
+            'id'=>"required",
+            'title'=>"required",
+            'description'=>"required",
+            'search_filters'=>"required",
+            'like_per_day'=>"required",
+            'video_call'=>"required",
+            'who_like_me'=>"required",
+            'who_view_me'=>"required",
+            'message_per_match'=>"required",
+            'price'=>"required",
+            'currency_code'=>"required",
+            'month'=>"required",
+            'plan_duration'=>"required",
+        ]);
+
+        if ($validator->fails())
+        {
+            return back()->withInput()->withErrors($validator);
+        }
+
+        $input = $request->all();
+        $insert_data['title']             = $input['title'];
+        $insert_data['description']       = $input['description'];
+        $insert_data['search_filters']    = implode(',',$input['search_filters']);
+        $insert_data['like_per_day']      = $input['like_per_day'];
+        $insert_data['video_call']        = $input['video_call'];
+        $insert_data['who_like_me']       = $input['who_like_me'];
+        $insert_data['who_view_me']       = $input['who_view_me'];
+        $insert_data['message_per_match'] = $input['message_per_match'];
+        $insert_data['price']             = $input['price'];
+        $insert_data['currency_code']     = $input['currency_code'];
+        $insert_data['month']             = $input['month'];
+        $insert_data['plan_duration']     = $input['plan_duration'];
+        
+        Subscription::where('id',$request->id)->update($insert_data);
+        return redirect()->route('subscription.list')->with('message','Subscription updated Successfully'); 
+    }
 }

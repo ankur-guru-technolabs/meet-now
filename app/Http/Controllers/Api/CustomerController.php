@@ -16,6 +16,8 @@ use App\Models\UserReport;
 use App\Models\ContactSupport;
 use App\Models\Notification;
 use App\Models\Setting;
+use App\Models\Subscription;
+use App\Models\UserSubscription;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Lib\RtcTokenBuilder;
@@ -44,6 +46,21 @@ class CustomerController extends BaseController
             $data['user']['hobbies_name']   = implode(", ", $hobbyNames->toArray());
             $data['user']['gender_new']                = Gender::where('id',$data['user']['gender'])->pluck('gender')->first();
             $data['user']['interested_gender_new']     = Gender::where('id',$data['user']['interested_gender'])->pluck('gender')->first();
+
+            if(!isset($request->id)){
+                $user_id = Auth::id();
+                $today_date = date('Y-m-d H:i:s');
+
+                $is_purchased           = UserSubscription::where('user_id',$user_id)->where('expire_date','>',$today_date)->first();
+                if($is_purchased != null){
+                    $data['user']['plan_data'] = Subscription::where('id',$is_purchased->subscription_id)->first();
+                }
+
+                $free_subscription      = Subscription::where('plan_type','free')->pluck('search_filters')->first();
+                $paid_subscription      = Subscription::where('plan_type','paid')->pluck('search_filters')->first();
+                $data['user']['free']           = explode(',',$free_subscription);
+                $data['user']['paid']           = explode(',',$paid_subscription);
+            }
 
             if($id != Auth::id()){
                 
@@ -84,17 +101,18 @@ class CustomerController extends BaseController
                 'interested_gender'     => 'required',
                 'birth_date' => 'required',
                 'media'      => 'sometimes|required',
-                'media.*'   => 'sometimes|required|file|mimes:jpeg,png,jpg,mp4,mov,avi|max:100000',
+                'media.*'    => 'sometimes|required|file|mimes:jpeg,png,jpg,mp4,mov,avi|max:100000',
                 'thumbnail_image' => 'sometimes|file|mimes:jpeg,png,jpg',
-                'hobbies' => [
-                    'required',
-                    function ($attribute, $value, $fail) {
-                        $numCommas = substr_count($value, ',');
-                        if ($numCommas > 2) {
-                            $fail('You can select max 3 '.$attribute);
-                        }
-                    },
-                ],
+                'hobbies'    => 'required',
+                // 'hobbies' => [
+                //     'required',
+                //     function ($attribute, $value, $fail) {
+                //         $numCommas = substr_count($value, ',');
+                //         if ($numCommas > 2) {
+                //             $fail('You can select max 3 '.$attribute);
+                //         }
+                //     },
+                // ],
             ]);
 
             if ($validateData->fails()) {
@@ -250,6 +268,16 @@ class CustomerController extends BaseController
                 return $this->error($validateData->errors(),'Validation error',403);
             }
             
+            $user_id = Auth::id();
+            $today_date = date('Y-m-d H:i:s');
+            $is_purchased = UserSubscription::where('user_id',$user_id)->where('expire_date','>',$today_date)->first();
+            if($is_purchased === null){
+                $today_like_count = UserLikes::where('like_from',$user_id)->whereDate('created_at', date('Y-m-d'))->count();
+                if($today_like_count > 20){
+                    return $this->error('You have already reached at maximum like limit','You have already reached at maximum like limit');
+                };
+            }
+
             $input              = $request->all();
             $input['like_from'] = Auth::id();
             $input['status']    = (strtolower($input['status']) == 'like') ? 1 : 0;
@@ -320,7 +348,7 @@ class CustomerController extends BaseController
         try{
             $validateData = Validator::make($request->all(), [
                 'interested_gender' => 'required',
-                'hobbies' => 'required',
+                // 'hobbies' => 'required',
                 'min_age' => 'required',
                 'max_age' => 'required|gte:min_age',
                 'min_distance' => 'required',
@@ -339,7 +367,7 @@ class CustomerController extends BaseController
                                 ->where('interested_gender', Auth::user()->gender)
                                 ->whereBetween('age', [$request->min_age, $request->max_age])
                                 ->where(function($query) use ($request) {
-                                    if($request->hobbies) {
+                                    if(isset($request->hobbies)) {
                                         $hobby_ids = explode(',', $request->hobbies);
                                         foreach($hobby_ids as $id) {
                                             $query->orWhereRaw("FIND_IN_SET($id, hobbies)");
@@ -715,6 +743,13 @@ class CustomerController extends BaseController
                 return $this->error($validateData->errors(),'Validation error',403);
             }
 
+            $user_id = Auth::id();
+            $today_date = date('Y-m-d H:i:s');
+            $is_purchased = UserSubscription::where('user_id',$user_id)->where('expire_date','>',$today_date)->first();
+            if($is_purchased === null){
+                return $this->error('Please purchase subscription for video call','Please purchase subscription for video call');
+            }
+
             if (Auth::user()) { 
                 $appID =  env("AGORA_APP_ID", "d13ef194c8e74a21be2d1e7672792be3");
                 $appCertificate = env("AGORA_APP_CERTIFICATE", "cbef905ce5c5413884623f8fc0567215");
@@ -853,6 +888,65 @@ class CustomerController extends BaseController
                 $user_data->save();
                 return $this->success([],'Notification enable successfully');
             }
+        }catch(Exception $e){
+            return $this->error($e->getMessage(),'Exception occur');
+        }
+        return $this->error('Something went wrong','Something went wrong');
+    }
+
+    // SUBSCRIPTION LISTING
+    
+    public function subscriptionList(Request $request){
+        try{
+            $data['subscription_list'] = Subscription::all();
+            return $this->success($data,'Subscription listing');
+        }catch(Exception $e){
+            return $this->error($e->getMessage(),'Exception occur');
+        }
+        return $this->error('Something went wrong','Something went wrong');
+    }
+   
+    // PURCHASE SUVSCRIPTION
+    
+    public function purchaseSubscription(Request $request){
+        try{
+            $user_id = Auth::id();
+            $today_date = date('Y-m-d H:i:s');
+            $is_purchased = UserSubscription::where('user_id',$user_id)->where('expire_date','>',$today_date)->first();
+            if($is_purchased === null){
+                $plan_data = Subscription::where('id',$request->subscription_id)->first();
+                $user_subscription                  = new UserSubscription();
+                $user_subscription->user_id         =  $user_id; 
+                $user_subscription->subscription_id =  $plan_data->id; 
+                $user_subscription->expire_date     =  Date('Y-m-d H:i:s', strtotime('+'.$plan_data->plan_duration. 'days')); 
+                $user_subscription->title           =  $plan_data->title; 
+                $user_subscription->price           =  $plan_data->price; 
+                $user_subscription->currency_code   =  $plan_data->currency_code; 
+                $user_subscription->month           =  $plan_data->month; 
+                $user_subscription->plan_duration   = $plan_data->plan_duration; 
+                $user_subscription->plan_type       = $plan_data->plan_type; 
+                $user_subscription->save(); 
+                return $this->success([],'Subscription purchased successfully');
+            }
+            return $this->error('You have already purchased plan','You have already purchased plan');
+        }catch(Exception $e){
+            return $this->error($e->getMessage(),'Exception occur');
+        }
+        return $this->error('Something went wrong','Something went wrong');
+    }
+
+    // ACTIVE SUBSCRIPTION LISTING
+    
+    public function activeSubscriptionList(Request $request){
+        try{
+            $user_id = Auth::id();
+            $today_date = date('Y-m-d H:i:s');
+            $is_purchased = UserSubscription::where('user_id',$user_id)->where('expire_date','>',$today_date)->first();
+            if($is_purchased != null){
+                $data['plan_data'] = Subscription::where('id',$is_purchased->subscription_id)->first();
+                return $this->success($data,'Active subscription successfully');
+            }
+            return $this->success([],'You have no active subscription');
         }catch(Exception $e){
             return $this->error($e->getMessage(),'Exception occur');
         }

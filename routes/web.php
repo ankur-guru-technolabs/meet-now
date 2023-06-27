@@ -63,6 +63,12 @@ Route::middleware(['admin'])->group(function () {
         Route::get('index', [AdminController::class, 'notificationIndex'])->name('index');
         Route::post('send', [AdminController::class, 'notificationSend'])->name('send');
     });
+    
+    Route::group(['prefix' => 'subscription','as'=>'subscription.'], function () {
+        Route::get('list', [AdminController::class, 'subscriptionList'])->name('list');
+        Route::get('subscription-edit/{id}', [AdminController::class, 'subscriptionEdit'])->name('subscription-edit');
+        Route::post('subscription-update', [AdminController::class, 'subscriptionUpdate'])->name('subscription-update');
+    });
 });
 
 
