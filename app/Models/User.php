@@ -33,6 +33,12 @@ class User extends Authenticatable
         'lastseen',
         'user_type',
         'hobbies',
+        'body_type',
+        'education',
+        'exercise',
+        'religion',
+        'about',
+        'distance_in',
         'status',
         'email_verified',
         'phone_verified',
@@ -66,6 +72,11 @@ class User extends Authenticatable
         'age' => 'int',
         'gender' => 'int',
         'interested_gender' => 'int',
+        'body_type' => 'int',
+        'education' => 'int',
+        'exercise' => 'int',
+        'religion' => 'int',
+        'distance_in' => 'int',
         'status'=> 'int',
         'email_verified' => 'int',
         'phone_verified'=> 'int',
@@ -73,6 +84,11 @@ class User extends Authenticatable
         'email_verified_at' => 'datetime',
         'is_notification_mute'=> 'int', 
     ];
+
+    public function activeSubscription()
+    {
+        return $this->hasOne(UserSubscription::class)->where('expire_date', '>', now());
+    }
 
     public function media()
     {

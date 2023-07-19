@@ -21,6 +21,10 @@ use App\Models\UserSubscription;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Lib\RtcTokenBuilder;
+use App\Models\Bodytype;
+use App\Models\Education;
+use App\Models\Exercise;
+use App\Models\Religion;
 use DateTime;
 use Exception;
 use Helper; 
@@ -33,7 +37,7 @@ class CustomerController extends BaseController
     public function getProfile(Request $request){
         try{ 
             $id = isset($request->id) ? $request->id : Auth::id();
-            $data['user']   =  User::with('media')->find($id);
+            $data['user']   =  User::with('media','activeSubscription')->find($id);
 
             $data['user']->media->map(function ($photo) {
                 $photo->append('profile_photo');
@@ -46,6 +50,10 @@ class CustomerController extends BaseController
             $data['user']['hobbies_name']   = implode(", ", $hobbyNames->toArray());
             $data['user']['gender_new']                = Gender::where('id',$data['user']['gender'])->pluck('gender')->first();
             $data['user']['interested_gender_new']     = Gender::where('id',$data['user']['interested_gender'])->pluck('gender')->first();
+            $data['user']['body_type_new']             = Bodytype::where('id',$data['user']['body_type'])->pluck('name')->first();
+            $data['user']['education_new']             = Education::where('id',$data['user']['education'])->pluck('name')->first();
+            $data['user']['exercise_new']              = Exercise::where('id',$data['user']['exercise'])->pluck('name')->first();
+            $data['user']['religion_new']              = Religion::where('id',$data['user']['religion'])->pluck('name')->first();
 
             if(!isset($request->id)){
                 $user_id = Auth::id();
@@ -75,6 +83,11 @@ class CustomerController extends BaseController
 
                     $title = "Your profile has been viewed by ".Auth::user()->name;
                     $message = "Your profile has been viewed by ".Auth::user()->name; 
+                    
+                    if($data['user']->activeSubscription == null){
+                        $title = "Your profile has been viewed by someone.";
+                        $message = "Your profile has been viewed by someone."; 
+                    }
                     Helper::send_notification('single', Auth::id(), $id, $title, 'user_view', $message, []);
                 };
             }
@@ -102,8 +115,15 @@ class CustomerController extends BaseController
                 'birth_date' => 'required',
                 'media'      => 'sometimes|required',
                 'media.*'    => 'sometimes|required|file|mimes:jpeg,png,jpg,mp4,mov,avi|max:100000',
+                'profile_image'   => 'sometimes|file|mimes:jpeg,png,jpg',
                 'thumbnail_image' => 'sometimes|file|mimes:jpeg,png,jpg',
                 'hobbies'    => 'required',
+                'body_type'  => 'required',
+                'education'  => 'required',
+                'exercise'   => 'required',
+                'religion'   => 'required',
+                'about'      => 'required',
+                'distance_in'=> 'required',
                 // 'hobbies' => [
                 //     'required',
                 //     function ($attribute, $value, $fail) {
@@ -147,12 +167,17 @@ class CustomerController extends BaseController
                     mkdir($folderPath, 0777, true);
                 }
 
-
+                $mediaFiles = $request->file('media');
+                $thumbnailImage = $request->file('thumbnail_image');
+                $profileImage = $request->file('profile_image');
+                $user_photo_data = [];
+                
                 if (isset($request->image)) {
 
-                    $user_old_photo_name = UserPhoto::whereIn('id', $request->image)->where('user_id',$request->user_id)->where('type','!=','thumbnail_image')->pluck('name')->toArray();
+                    $userPhotos = UserPhoto::whereIn('id', $request->image)->where('user_id',$request->user_id)->where('type','!=','thumbnail_image');
+                    $user_old_photo_name = $userPhotos->pluck('name')->toArray();
                     $deletedFiles = [];
-
+                    
                     if(!empty($user_old_photo_name)){
                         foreach ($user_old_photo_name as $name) {
                             $path = public_path('user_profile/' . $name);
@@ -165,54 +190,23 @@ class CustomerController extends BaseController
                             }
                         };
                     }
-                    UserPhoto::whereIn('id', $request->image)->where('user_id',$request->user_id)->where('type','!=','thumbnail_image')->delete();
+                    $userPhotos->delete();
                 }
 
-                if($request->hasFile('media')){
-                    $medias = $request->file('media');
-                  
-                    foreach ($medias as $photo) {
-                        $extension  = $photo->getClientOriginalExtension();
-                        $filename = 'User_'.$user_data->id.'_'.random_int(10000, 99999). '.' . $extension;
-                        $photo->move(public_path('user_profile'), $filename);
-
-                        if ($extension == 'jpg' || $extension == 'jpeg' || $extension == 'png') {
-                            $user_photo_data['type'] = 'image';
-                        } elseif ($extension == 'mp4' || $extension == 'avi' || $extension == 'mov') {
-                            $user_photo_data['type'] = 'video';
-                        } 
-                        $user_photo_data['user_id'] = $user_data->id;
-                        $user_photo_data['name'] = $filename;
-                        UserPhoto::create($user_photo_data);
-                    }
+                if (!empty($mediaFiles)) {
+                    $user_photo_data = $this->uploadMediaFiles($mediaFiles, $user_data->id);
                 }
 
-                if(isset($request->is_thumbnail_change) && $request->is_thumbnail_change == 1){
-                    $user_old_thumbnail_name = UserPhoto::where('user_id',$request->user_id)->where('type','thumbnail_image')->pluck('name')->toArray();
-                    $path = public_path('user_profile/' . $user_old_thumbnail_name[0]);
-                    if (File::exists($path)) {
-                        if (!is_writable($path)) {
-                            chmod($path, 0777);
-                        }
-                        File::delete($path);
-                    }
-    
-                    UserPhoto::where('user_id',$request->user_id)->where('type','thumbnail_image')->delete();
+                if (!empty($thumbnailImage) && isset($request->is_thumbnail_change) && $request->is_thumbnail_change == 1) {
+                    $this->deleteUserPhotos(null, $request->user_id, 'thumbnail_image');
+                    $user_photo_data[] = $this->uploadImageFile($thumbnailImage, $user_data->id, 'thumbnail_image');
                 }
 
-                if ($request->hasFile('thumbnail_image')) {
-                    $thumbnail_image = $request->file('thumbnail_image');
-                    $extension  = $thumbnail_image->getClientOriginalExtension();
-                    $filename = 'User_'.$user_data->id.'_'.random_int(10000, 99999). '.' . $extension;
-                    $thumbnail_image->move(public_path('user_profile'), $filename);
-
-                    if ($extension == 'jpg' || $extension == 'jpeg' || $extension == 'png') {
-                        $user_photo_data['type'] = 'thumbnail_image';
-                    } 
-                    $user_photo_data['user_id'] = $user_data->id;
-                    $user_photo_data['name'] = $filename;
-                    UserPhoto::create($user_photo_data);
+                if (!empty($profileImage)) {
+                    $this->deleteUserPhotos(null, $request->user_id, 'profile_image');
+                    $user_photo_data[] = $this->uploadImageFile($profileImage, $user_data->id, 'profile_image');
                 }
+                UserPhoto::insert($user_photo_data);
 
                 $user_data->new_email = null;
                 if($user_data->email != $request->email){
@@ -273,7 +267,8 @@ class CustomerController extends BaseController
             $is_purchased = UserSubscription::where('user_id',$user_id)->where('expire_date','>',$today_date)->first();
             if($is_purchased === null){
                 $today_like_count = UserLikes::where('like_from',$user_id)->whereDate('created_at', date('Y-m-d'))->count();
-                if($today_like_count > 20){
+                $free_plan_likes = Subscription::where('plan_type','free')->first();
+                if($today_like_count > $free_plan_likes->like_per_day){
                     return $this->error('You have already reached at maximum like limit','You have already reached at maximum like limit');
                 };
             }
@@ -332,6 +327,11 @@ class CustomerController extends BaseController
 
                 $title = "You profile is liked by ".Auth::user()->name;
                 $message = "You profile is liked by ".Auth::user()->name; 
+                $another_user_data   =  User::with('media','activeSubscription')->find($input['like_to']);
+                if($another_user_data->activeSubscription == null){
+                    $title = "You profile is liked by someone.";
+                    $message = "You profile is liked by someone."; 
+                }
                 Helper::send_notification('single', Auth::id(), $input['like_to'], $title, 'like', $message, []);
             }
 
@@ -349,19 +349,26 @@ class CustomerController extends BaseController
             $validateData = Validator::make($request->all(), [
                 'interested_gender' => 'required',
                 // 'hobbies' => 'required',
-                'min_age' => 'required',
-                'max_age' => 'required|gte:min_age',
-                'min_distance' => 'required',
-                'max_distance' => 'required|gte:min_distance',
-                'latitude'  => 'required',
-                'longitude' => 'required',
+                'min_age'     => 'required',
+                'max_age'     => 'required|gte:min_age',
+                'min_distance'=> 'required',
+                'max_distance'=> 'required|gte:min_distance',
+                'latitude'    => 'required',
+                'longitude'   => 'required',
+                'distance_in' => 'required',
             ]);
 
             if ($validateData->fails()) {
                 return $this->error($validateData->errors(),'Validation error',403);
             }
+            $auth_lat1 = deg2rad($request->latitude);
+            $auth_lon1 = deg2rad($request->longitude);
+
+            $earthRadius = 3959; 
+
             $data['user_list'] = User::where('users.id', '!=', Auth::id())
                                 ->where('user_type', 'user')
+                                ->where('users.status', 1)
                                 ->where('is_hide_profile', 0)
                                 ->where('gender', $request->interested_gender)
                                 ->where('interested_gender', Auth::user()->gender)
@@ -387,24 +394,30 @@ class CustomerController extends BaseController
                                 ->where('users.updated_at', '>=', now()->subMinutes(5))
                                 ->select('users.id', 'name', 'location', 'age','live_latitude','live_longitude')
                                 ->get()
-                                ->map(function ($user) use ($request) {
-                                    $profile_photo_media = $user->media->firstWhere('type', 'image');
-                                    $user->profile_photo = $profile_photo_media->profile_photo;
-                                    unset($user->media);
-                                    
-                                    $auth_lat1 = deg2rad($request->latitude);
-                                    $auth_lon1 = deg2rad($request->longitude);
-                                    $lat2 = deg2rad($user->live_latitude);
-                                    $lon2 = deg2rad($user->live_longitude);
-                                    $dLat = $lat2 - $auth_lat1;
-                                    $dLon = $lon2 - $auth_lon1;
-                                    $a = sin($dLat/2) * sin($dLat/2) + cos($auth_lat1) * cos($lat2) * sin($dLon/2) * sin($dLon/2);
-                                    $distance = round(3959 * 2 * atan2(sqrt($a), sqrt(1-$a)) * 1760,2);  
-                                    $user->distance = $distance;
-                                    if($distance >= $request->min_distance && $distance <= $request->max_distance ){
-                                        return $user;
+                                ->map(function ($user) use ($request, $auth_lat1, $auth_lon1, $earthRadius) {
+                                    if(!empty($user->live_latitude) && !empty($user->live_longitude)){
+                                        $profile_photo_media = $user->media->firstWhere('type', 'profile_image');
+                                        $user->profile_photo = $profile_photo_media->profile_photo ?? null;
+                                        unset($user->media);
+                                        $lat2 = deg2rad($user->live_latitude);
+                                        $lon2 = deg2rad($user->live_longitude);
+                                        $dLat = $lat2 - $auth_lat1;
+                                        $dLon = $lon2 - $auth_lon1;
+                                        $a = sin($dLat/2) * sin($dLat/2) + cos($auth_lat1) * cos($lat2) * sin($dLon/2) * sin($dLon/2);
+                                        $c = $earthRadius * 2 * atan2(sqrt($a), sqrt(1 - $a));
+                                        if($request->distance_in == 0){
+                                            $distance = round($c * 1760,2);  
+                                        }
+                                        if($request->distance_in == 1){
+                                            $distance = round($c,2);  
+                                        }
+                                        $user->distance = $distance;
+                                        if($distance >= $request->min_distance && $distance <= $request->max_distance ){
+                                            return $user;
+                                        }
                                     }
-                                });
+                                })->filter();
+
             if (empty($data['user_list'][0])) {
                 $data['user_list'] = [];
             }
@@ -432,10 +445,10 @@ class CustomerController extends BaseController
 
             $data['matched_user_listing'] = $matched_user_listing->map(function ($user){
                                             if($user->users->isNotEmpty()){
-                                                $profile_photo_media = $user->users->first()->media->firstWhere('type', 'image');
+                                                $profile_photo_media = $user->users->first()->media->firstWhere('type', 'profile_image');
                                                 $user->user_id = $user->users->first()->id;
                                                 $user->name = $user->users->first()->name;
-                                                $user->profile_photo = $profile_photo_media->profile_photo;
+                                                $user->profile_photo = $profile_photo_media->profile_photo ?? null;
                                                 unset($user->users);
                                             }
                                             return $user;
@@ -456,8 +469,12 @@ class CustomerController extends BaseController
     
     public function chatList(Request $request){
         try{
-            $chat_list          =   Chat::where('receiver_id',Auth::id())
-                                    ->select('chats.id', 'chats.match_id','chats.sender_id','chats.receiver_id','chats.read_status')
+            $chat_list          =   Chat::where(function ($query) {
+                                        $query->where('receiver_id', Auth::id())
+                                            ->orWhere('sender_id', Auth::id());
+                                    })
+                                    ->join(DB::raw('(SELECT MAX(id) AS latest_chat_id FROM chats GROUP BY match_id) AS latest_chats'), 'chats.id', '=', 'latest_chats.latest_chat_id')
+                                    ->select('chats.id', 'chats.match_id','chats.sender_id','chats.receiver_id','chats.read_status','chats.type')
                                     ->selectRaw('MAX(chats.message) as last_message')
                                     ->selectRaw('(SELECT COUNT(*) FROM chats AS sub_chats WHERE sub_chats.match_id = chats.match_id AND sub_chats.read_status = 0 AND sub_chats.receiver_id = '.Auth::id().') as unread_message_count')
                                     ->leftJoin('user_likes as ul', function ($join) {
@@ -465,14 +482,25 @@ class CustomerController extends BaseController
                                     })
                                     ->where('ul.match_status',1) 
                                     ->groupBy('chats.match_id')
+                                    ->orderBy('chats.created_at', 'desc')
+                                    ->orderBy('chats.id', 'desc')
                                     ->paginate($request->input('perPage'), ['*'], 'page', $request->input('page'));
             
             $data['chat_list']  =   $chat_list->map(function ($user){
-                                            if($user->users->isNotEmpty()){
-                                                $profile_photo_media = $user->users->first()->media->firstWhere('type', 'image');
+                                            if($user->sender_id == Auth::id() && $user->userReceiver->isNotEmpty()){
+                                                $profile_photo_media = $user->userReceiver->first()->media->firstWhere('type', 'profile_image'); 
+                                                $user->user_id = $user->userReceiver->first()->id;
+                                                $user->name = $user->userReceiver->first()->name;
+                                                $user->profile_photo = $profile_photo_media->profile_photo ?? null;
+                                                $user->unread_message_count = (int)$user->unread_message_count;
+                                                $user->last_message = $user->last_message;
+                                                unset($user->userReceiver);
+                                            }
+                                            if($user->sender_id != Auth::id() && $user->users->isNotEmpty()){
+                                                $profile_photo_media = $user->users->first()->media->firstWhere('type', 'profile_image');
                                                 $user->user_id = $user->users->first()->id;
                                                 $user->name = $user->users->first()->name;
-                                                $user->profile_photo = $profile_photo_media->profile_photo;
+                                                $user->profile_photo = $profile_photo_media->profile_photo ?? null;
                                                 $user->unread_message_count = (int)$user->unread_message_count;
                                                 $user->last_message = $user->last_message;
                                                 unset($user->users);
@@ -518,6 +546,7 @@ class CustomerController extends BaseController
                 'match_id' => 'required',
                 'receiver_id' => 'required',
                 'message' => 'required',
+                'type' => 'required',
             ]);
 
             if ($validateData->fails()) {
@@ -529,6 +558,7 @@ class CustomerController extends BaseController
             $chats->sender_id   = Auth::id();
             $chats->receiver_id = $request->receiver_id;
             $chats->message     = $request->message;
+            $chats->type        = $request->type;
             $chats->save();
 
             // Notification for message send
@@ -559,6 +589,23 @@ class CustomerController extends BaseController
 
             UserLikes::where('user_likes.match_id',$request->match_id)->update(['user_likes.match_status' => 0]);
 
+            $user_data =  UserLikes::where('user_likes.match_id',$request->match_id)->first();
+
+            $notification_receiver_id = 0;
+            if($user_data->like_from != Auth::id()){
+                $notification_receiver_id = $user_data->like_from;
+            }
+
+            if($user_data->like_to != Auth::id()){
+                $notification_receiver_id = $user_data->like_to;
+            } 
+            
+            // Notification for unmatch profile both side
+
+            $title = "You have unmatched with ".Auth::user()->name;
+            $message = "You have unmatched with ".Auth::user()->name; 
+            Helper::send_notification('single', Auth::id(), $notification_receiver_id, $title, 'unmatch', $message, []);
+
             return $this->success([],'Unmatch done successfully');
         }catch(Exception $e){
             return $this->error($e->getMessage(),'Exception occur');
@@ -587,6 +634,12 @@ class CustomerController extends BaseController
             $user_report->reported_user_id  = $request->reported_user_id;
             $user_report->message           = $request->message;
             $user_report->save();
+
+            // Notification for report
+
+            $title = Auth::user()->name ." reported your profile";
+            $message = Auth::user()->name ." reported your profile"; 
+            Helper::send_notification('single', Auth::id(), $request->reported_user_id, $title, 'report', $message, []);
 
             return $this->success([],'Report done successfully');
         }catch(Exception $e){
@@ -634,11 +687,11 @@ class CustomerController extends BaseController
 
             $data['user_likes_listing'] = $user_likes_listing->map(function ($user){
                                             if($user->users->isNotEmpty()){
-                                                $profile_photo_media = $user->users->first()->media->firstWhere('type', 'image');
+                                                $profile_photo_media = $user->users->first()->media->firstWhere('type', 'profile_image');
                                                 $user->user_id = $user->users->first()->id;
                                                 $user->name = $user->users->first()->name;
                                                 $user->age = $user->users->first()->age;
-                                                $user->profile_photo = $profile_photo_media->profile_photo;
+                                                $user->profile_photo = $profile_photo_media->profile_photo ?? null;
                                                 unset($user->users);
                                             }
                                             return $user;
@@ -680,11 +733,11 @@ class CustomerController extends BaseController
 
             $data['user_view_listing'] = $user_view_listing->map(function ($user){
                                             if($user->users->isNotEmpty()){
-                                                $profile_photo_media = $user->users->first()->media->firstWhere('type', 'image');
+                                                $profile_photo_media = $user->users->first()->media->firstWhere('type', 'profile_image');
                                                 $user->user_id = $user->users->first()->id;
                                                 $user->name = $user->users->first()->name;
                                                 $user->age = $user->users->first()->age;
-                                                $user->profile_photo = $profile_photo_media->profile_photo;
+                                                $user->profile_photo = $profile_photo_media->profile_photo ?? null;
                                                 unset($user->users);
                                             }
                                             return $user;
@@ -845,9 +898,9 @@ class CustomerController extends BaseController
                     $notification->date = date('d M', strtotime($notification->created_at));
                 } 
 
-                $profile_photo_media = $notification->notificationSender->first()->media->firstWhere('type', 'image');
+                $profile_photo_media = $notification->notificationSender->first()->media->firstWhere('type', 'profile_image');
                 $notification->name = $notification->notificationSender->first()->name;
-                $notification->profile_photo = $profile_photo_media->profile_photo;
+                $notification->profile_photo = $profile_photo_media->profile_photo ?? null;
                 unset($notification->notificationSender);
                 
                 return $notification;
@@ -862,7 +915,6 @@ class CustomerController extends BaseController
     // NOTIFICATION READ
 
      public function notificationRead(){
-        return $this->success([],'Notification read successfully');
         try{
             Notification::where('receiver_id',Auth::id())->update(['status'=>1]);
             return $this->success([],'Notification read successfully');
@@ -926,6 +978,13 @@ class CustomerController extends BaseController
                 $user_subscription->plan_duration   = $plan_data->plan_duration; 
                 $user_subscription->plan_type       = $plan_data->plan_type; 
                 $user_subscription->save(); 
+
+                // Notification for subscription purchase
+
+                $title = $plan_data->title." purchased successfully";
+                $message = $plan_data->title." purchased successfully"; 
+                Helper::send_notification('single', 0, Auth::id(), $title, 'subscription_purchase', $message, []);
+
                 return $this->success([],'Subscription purchased successfully');
             }
             return $this->error('You have already purchased plan','You have already purchased plan');
@@ -943,10 +1002,10 @@ class CustomerController extends BaseController
             $today_date = date('Y-m-d H:i:s');
             $is_purchased = UserSubscription::where('user_id',$user_id)->where('expire_date','>',$today_date)->first();
             if($is_purchased != null){
-                $data['plan_data'] = Subscription::where('id',$is_purchased->subscription_id)->first();
+                $data= Subscription::where('id',$is_purchased->subscription_id)->first();
                 return $this->success($data,'Active subscription successfully');
             }
-            return $this->success([],'You have no active subscription');
+            return $this->success(null,'You have no active subscription');
         }catch(Exception $e){
             return $this->error($e->getMessage(),'Exception occur');
         }

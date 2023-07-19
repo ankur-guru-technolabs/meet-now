@@ -38,6 +38,24 @@
                 </a>
                 <div class="collapse {{ isActivePrefix('questions','show') }}" id="question_management_menu">
                     <ul class="nav ">
+                        <li class="nav-item {{isActive('questions.bodytype.list')}}">
+                            <a class="nav-link text-white {{isActive('questions.bodytype.list')}}" href="{{route('questions.bodytype.list')}}">
+                                <img class="menu-img-class" src="{{ asset('images/body-type.png') }}">
+                                <span class="sidenav-normal  ms-2  ps-1">Body Types</span>
+                            </a>
+                        </li>
+                        <li class="nav-item {{isActive('questions.education.list')}}">
+                            <a class="nav-link text-white {{isActive('questions.education.list')}}" href="{{route('questions.education.list')}}">
+                                <img class="menu-img-class" src="{{ asset('images/education.png') }}">
+                                <span class="sidenav-normal  ms-2  ps-1">Education</span>
+                            </a>
+                        </li>
+                        <li class="nav-item {{isActive('questions.exercise.list')}}">
+                            <a class="nav-link text-white {{isActive('questions.exercise.list')}}" href="{{route('questions.exercise.list')}}">
+                                <img class="menu-img-class" src="{{ asset('images/exercise.png') }}">
+                                <span class="sidenav-normal  ms-2  ps-1">Exercise</span>
+                            </a>
+                        </li>
                         <li class="nav-item {{isActive('questions.gender.list')}}">
                             <a class="nav-link text-white {{isActive('questions.gender.list')}}" href="{{route('questions.gender.list')}}">
                                 <img class="menu-img-class" src="{{ asset('images/genders.png') }}">
@@ -48,6 +66,12 @@
                             <a class="nav-link text-white {{isActive('questions.hobby.list')}}" href="{{route('questions.hobby.list')}}">
                                 <img class="menu-img-class" src="{{ asset('images/hobbies.png') }}">
                                 <span class="sidenav-normal  ms-2  ps-1">Hobbies</span>
+                            </a>
+                        </li>
+                        <li class="nav-item {{isActive('questions.religion.list')}}">
+                            <a class="nav-link text-white {{isActive('questions.religion.list')}}" href="{{route('questions.religion.list')}}">
+                                <img class="menu-img-class" src="{{ asset('images/religion.png') }}">
+                                <span class="sidenav-normal  ms-2  ps-1">Religion</span>
                             </a>
                         </li>
                     </ul>
@@ -132,6 +156,28 @@
                     <ul class="nav ">
                         <li class="nav-item {{isActive('subscription.list')}}">
                             <a class="nav-link text-white {{isActive('subscription.list')}}" href="{{route('subscription.list')}}">
+                                <i class="material-icons opacity-10">list_alt</i>
+                                <span class="sidenav-normal  ms-2  ps-1">List</span>
+                            </a>
+                        </li>
+                        <li class="nav-item {{isActive('subscription.order')}}">
+                            <a class="nav-link text-white {{isActive('subscription.order')}}" href="{{route('subscription.order')}}">
+                                <i class="material-icons opacity-10">list_alt</i>
+                                <span class="sidenav-normal  ms-2  ps-1">Order</span>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </li>
+            <li class="nav-item">
+                <a data-bs-toggle="collapse" href="#report_menu" class="nav-link text-white {{ isActivePrefix('report','active') }}" aria-controls="report_menu" role="button" aria-expanded="{{ isActivePrefix('report','true') }}">
+                    <i class="material-icons-round opacity-10">report</i>
+                    <span class="nav-link-text ms-2 ps-1">Report</span>
+                </a>
+                <div class="collapse {{ isActivePrefix('report','show') }}" id="report_menu">
+                    <ul class="nav ">
+                        <li class="nav-item {{isActive('report.list')}}">
+                            <a class="nav-link text-white {{isActive('report.list')}}" href="{{route('report.list')}}">
                                 <i class="material-icons opacity-10">list_alt</i>
                                 <span class="sidenav-normal  ms-2  ps-1">List</span>
                             </a>

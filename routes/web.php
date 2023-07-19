@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\HomeController;
 use App\Http\Controllers\Admin\AdminController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\UserController;
@@ -24,12 +25,34 @@ Route::get('/', function () {
 
 Route::get('/', [LoginController::class, 'showLoginForm'])->name('/');
 Route::post('/login-admin', [LoginController::class, 'login'])->name('login-admin');
+Route::get('privacy-policy', [LoginController::class, 'privacyPolicy'])->name('privacy-policy');
+Route::get('terms-condition', [LoginController::class, 'termsCondition'])->name('terms-condition');
+Route::get('contact', [LoginController::class, 'contactForm'])->name('contact');
+Route::post('contact-us-store', [LoginController::class, 'contactStore'])->name('contact-us-store');
 
 Route::middleware(['admin'])->group(function () {
 
     Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
     Route::group(['prefix' => 'questions','as'=>'questions.'], function () {
+        Route::group(['prefix' => 'bodytype','as'=>'bodytype.'], function () {
+            Route::get('list', [AdminController::class, 'bodytypeList'])->name('list');
+            Route::post('store', [AdminController::class, 'bodytypeStore'])->name('store');
+            Route::post('update', [AdminController::class, 'bodytypeUpdate'])->name('update');
+            Route::get('delete/{id}', [AdminController::class, 'bodytypeDelete'])->name('delete');
+        });
+        Route::group(['prefix' => 'education','as'=>'education.'], function () {
+            Route::get('list', [AdminController::class, 'educationList'])->name('list');
+            Route::post('store', [AdminController::class, 'educationStore'])->name('store');
+            Route::post('update', [AdminController::class, 'educationUpdate'])->name('update');
+            Route::get('delete/{id}', [AdminController::class, 'educationDelete'])->name('delete');
+        });
+        Route::group(['prefix' => 'exercise','as'=>'exercise.'], function () {
+            Route::get('list', [AdminController::class, 'exerciseList'])->name('list');
+            Route::post('store', [AdminController::class, 'exerciseStore'])->name('store');
+            Route::post('update', [AdminController::class, 'exerciseUpdate'])->name('update');
+            Route::get('delete/{id}', [AdminController::class, 'exerciseDelete'])->name('delete');
+        });
         Route::group(['prefix' => 'gender','as'=>'gender.'], function () {
             Route::get('list', [AdminController::class, 'genderList'])->name('list');
             Route::post('store', [AdminController::class, 'genderStore'])->name('store');
@@ -41,6 +64,12 @@ Route::middleware(['admin'])->group(function () {
             Route::post('store', [AdminController::class, 'hobbyStore'])->name('store');
             Route::post('update', [AdminController::class, 'hobbyUpdate'])->name('update');
             Route::get('delete/{id}', [AdminController::class, 'hobbyDelete'])->name('delete');
+        });
+        Route::group(['prefix' => 'religion','as'=>'religion.'], function () {
+            Route::get('list', [AdminController::class, 'religionList'])->name('list');
+            Route::post('store', [AdminController::class, 'religionStore'])->name('store');
+            Route::post('update', [AdminController::class, 'religionUpdate'])->name('update');
+            Route::get('delete/{id}', [AdminController::class, 'religionDelete'])->name('delete');
         });
     });
     
@@ -65,12 +94,21 @@ Route::middleware(['admin'])->group(function () {
     });
     
     Route::group(['prefix' => 'subscription','as'=>'subscription.'], function () {
+        Route::get('order', [AdminController::class, 'subscriptionOrder'])->name('order');
         Route::get('list', [AdminController::class, 'subscriptionList'])->name('list');
         Route::get('subscription-edit/{id}', [AdminController::class, 'subscriptionEdit'])->name('subscription-edit');
         Route::post('subscription-update', [AdminController::class, 'subscriptionUpdate'])->name('subscription-update');
     });
+    
+    Route::group(['prefix' => 'report','as'=>'report.'], function () {
+        Route::get('list', [AdminController::class, 'reportList'])->name('list');
+        Route::post('user-block', [AdminController::class, 'userBlock'])->name('user-block');
+    });
+
 });
 
+Route::get('/subscription-expire', [LoginController::class, 'subscriptionExpire'])->name('cron');
+Route::get('/message-delete', [LoginController::class, 'messageDelete'])->name('cron');
 
 // Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
 // Auth::routes();

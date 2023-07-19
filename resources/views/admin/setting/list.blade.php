@@ -22,9 +22,9 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                @foreach($settings as $setting)
+                                @foreach($settings as $key=>$setting)
                                     <tr>
-                                        <td>{{$setting->id}}</td>
+                                        <td>{{ ++$key }}</td>
                                         <td>{{$setting->title}}</td>
                                         <td>
                                             <a href="{{route('static-pages.page-edit',['id' => $setting->id])}}">

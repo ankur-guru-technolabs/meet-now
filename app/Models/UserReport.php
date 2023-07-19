@@ -15,5 +15,17 @@ class UserReport extends Model
         'match_id',
         'message',
     ];
+
+    // Relationship with the reporter (User model)
+    public function reporter()
+    {
+        return $this->belongsTo(User::class, 'reporter_id');
+    }
+
+    // Relationship with the reported user (User model)
+    public function reportedUser()
+    {
+        return $this->belongsTo(User::class, 'reported_user_id');
+    }
     
 }

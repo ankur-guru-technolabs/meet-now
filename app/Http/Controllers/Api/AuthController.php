@@ -4,8 +4,12 @@ namespace App\Http\Controllers\Api;
 
 use Illuminate\Support\Facades\File;
 use App\Http\Controllers\BaseController;
+use App\Models\Bodytype;
+use App\Models\Education;
+use App\Models\Exercise;
 use App\Models\Gender;
 use App\Models\Hobby;
+use App\Models\Religion;
 use App\Models\Temp;
 use App\Models\User;
 use App\Models\UserPhoto;
@@ -44,11 +48,15 @@ class AuthController extends BaseController
                     'subject' => 'Email OTP Verification - For Meet now',
                 ];
 
-                Helper::sendMail('emails.email_verify', $email_data, $key, '');
-
                 if (User::where('email', '=', $key)->count() > 0) {
+                    if(User::where('email','=', $key)->where('status',0)->count() > 0){
+                        return $this->error('You are inactive','You are inactive');
+                    };
                     $data['is_user_exist'] = 1;
                 }
+
+                Helper::sendMail('emails.email_verify', $email_data, $key, '');
+
                 $data['send_in'] = 'email';
 
             } else if(isset($request->phone_no)){
@@ -64,7 +72,10 @@ class AuthController extends BaseController
                
                 $key             = $request->phone_no;
 
-                if (User::where('phone_no','=', $key)->count() > 0) {
+                if ($user = User::where('phone_no','=', $key)->count() > 0) {
+                    if(User::where('phone_no','=', $key)->where('status',0)->count() > 0){
+                        return $this->error('You are inactive','You are inactive');
+                    };
                     $data['is_user_exist'] = 1;
                 }
                 $data['send_in'] = 'phone_no';
@@ -188,9 +199,12 @@ class AuthController extends BaseController
 
     public function getRegistrationFormData(){
         try{
-            $data               = [];
-            $data['hobby']      = Hobby::all();
-            $data['gender']     = Gender::all();
+            $data                  = [];
+            $data['body_type']     = Bodytype::all();
+            $data['education']     = Education::all();
+            $data['exercise']      = Exercise::all();
+            $data['hobby']         = Hobby::all();
+            $data['religion']      = Religion::all();
             return $this->success($data,'Registration form data');
         }catch(Exception $e){
             return $this->error($e->getMessage(),'Exception occur');
@@ -213,10 +227,16 @@ class AuthController extends BaseController
                 'interested_gender'     => 'required',
                 'media'      => 'required',
                 'birth_date' => 'required',
-                'media'      => 'required|array|min:3',
+                'media'      => 'required|array|min:2',
                 'media.*'    => 'required|file|mimes:jpeg,png,jpg,mp4,mov,avi|max:100000',
+                'profile_image'   => 'required|file|mimes:jpeg,png,jpg',
                 'thumbnail_image' => 'sometimes|file|mimes:jpeg,png,jpg',
                 'hobbies'    => 'required',
+                'body_type'  => 'required',
+                'education'  => 'required',
+                'exercise'   => 'required',
+                'religion'   => 'required',
+                'about'      => 'required',
                 // 'hobbies' => [
                 //     'required',
                 //     function ($attribute, $value, $fail) {
@@ -250,42 +270,30 @@ class AuthController extends BaseController
                     mkdir($folderPath, 0777, true);
                 }
 
-                if ($request->hasFile('media')) {
-                    $medias = $request->file('media');
-                  
-                    foreach ($medias as $media) {
-                        $extension  = $media->getClientOriginalExtension();
-                        $filename = 'User_'.$user_data->id.'_'.random_int(10000, 99999). '.' . $extension;
-                        $media->move(public_path('user_profile'), $filename);
+                $mediaFiles = $request->file('media');
+                $thumbnailImage = $request->file('thumbnail_image');
+                $profileImage = $request->file('profile_image');
 
-                        if ($extension == 'jpg' || $extension == 'jpeg' || $extension == 'png') {
-                            $user_photo_data['type'] = 'image';
-                        } elseif ($extension == 'mp4' || $extension == 'avi' || $extension == 'mov') {
-                            $user_photo_data['type'] = 'video';
-                        } 
-                        $user_photo_data['user_id'] = $user_data->id;
-                        $user_photo_data['name'] = $filename;
-                        UserPhoto::create($user_photo_data);
-                    }
+                $user_photo_data = [];
+
+                if (!empty($mediaFiles)) {
+                    $user_photo_data = $this->uploadMediaFiles($mediaFiles, $user_data->id);
+                }
+    
+                if (!empty($thumbnailImage)) {
+                    $user_photo_data[] = $this->uploadImageFile($thumbnailImage, $user_data->id, 'thumbnail_image');
+                }
+    
+                if (!empty($profileImage)) {
+                    $user_photo_data[] = $this->uploadImageFile($profileImage, $user_data->id, 'profile_image');
+                }
+                UserPhoto::insert($user_photo_data);
+
+                $temp = Temp::where('key', $request->email)->value('value');
+                if ($temp !== null) {
+                    $user_data['otp'] = (int) $temp;
                 }
 
-                if ($request->hasFile('thumbnail_image')) {
-                    $thumbnail_image = $request->file('thumbnail_image');
-                    $extension  = $thumbnail_image->getClientOriginalExtension();
-                    $filename = 'User_'.$user_data->id.'_'.random_int(10000, 99999). '.' . $extension;
-                    $thumbnail_image->move(public_path('user_profile'), $filename);
-
-                    if ($extension == 'jpg' || $extension == 'jpeg' || $extension == 'png') {
-                        $user_photo_data['type'] = 'thumbnail_image';
-                    } 
-                    $user_photo_data['user_id'] = $user_data->id;
-                    $user_photo_data['name'] = $filename;
-                    UserPhoto::create($user_photo_data);
-                } 
-                $temp         = Temp::where('key',$request->email)->first();
-                if($temp != null){
-                    $user_data['otp'] = (int)$temp->value; 
-                }
                 return $this->success($user_data,'You are successfully registered');
             }
             return $this->error('Something went wrong','Something went wrong');

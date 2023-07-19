@@ -20,4 +20,13 @@ class UserSubscription extends Model
         'plan_duration',
         'plan_type',
     ];
+
+    public function user()
+    {
+        return $this->belongsTo(User::class,'user_id','id');
+    }
+
+    public function subscriptionOrder(){
+        return $this->belongsTo(Subscription::class,'subscription_id');
+    }
 }

@@ -22,7 +22,14 @@ class UserController extends BaseController
             $user = User::where('id',$request->id)->first();
             if($user){
                 $user->status = $request->status;
+                $user->fcm_token = null;
                 $user->save();
+
+                $tokens = $user->tokens;
+        
+                foreach ($tokens as $token) {
+                    $token->revoke();
+                }
                 return $this->success([],'Status change successfully');
             }
             return $this->error('User not found','User not found');

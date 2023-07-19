@@ -4,17 +4,111 @@ namespace App\Http\Controllers\Admin;
 
 use Illuminate\Http\Request;
 use App\Http\Controllers\BaseController;
+use App\Models\Bodytype;
 use App\Models\ContactSupport;
+use App\Models\Education;
+use App\Models\Exercise;
 use App\Models\Gender;
 use App\Models\Hobby;
+use App\Models\Religion;
 use App\Models\Setting;
 use App\Models\Subscription;
+use App\Models\User;
+use App\Models\UserReport;
+use App\Models\UserSubscription;
 use Validator;
 use Helper; 
 use Auth;
 
 class AdminController extends BaseController
 {
+    // BODYTYPE
+
+    public function bodyTypeList(){
+        $bodyTypes = Bodytype::all();
+        return view('admin.bodytype.list',compact('bodyTypes'));
+    }
+    
+    public function bodyTypeStore(Request $request){
+        $bodyTypes = new Bodytype;
+        $bodyTypes->name = $request->name;
+        $bodyTypes->save();
+        return redirect()->route('questions.bodytype.list')->with('message','Body type added Successfully'); 
+    }
+    
+    public function bodyTypeUpdate(Request $request){
+        $bodyTypes = Bodytype::find($request->id);
+        if ($bodyTypes) {
+            $bodyTypes->name = $request->name;
+            $bodyTypes->save();
+        } 
+        return redirect()->route('questions.bodytype.list')->with('message','Body type updated Successfully'); 
+    }
+    
+    public function bodyTypeDelete($id){
+        $bodyTypes = Bodytype::findOrFail($id);
+        $bodyTypes->delete();
+        return redirect()->route('questions.bodytype.list')->with('message','Body type deleted Successfully');
+    }
+
+    // EDUCATION
+
+    public function educationList(){
+        $educations = Education::all();
+        return view('admin.education.list',compact('educations'));
+    }
+    
+    public function educationStore(Request $request){
+        $educations = new Education;
+        $educations->name = $request->name;
+        $educations->save();
+        return redirect()->route('questions.education.list')->with('message','Education added Successfully'); 
+    }
+
+    public function educationUpdate(Request $request){
+        $educations = Education::find($request->id);
+        if ($educations) {
+            $educations->name = $request->name;
+            $educations->save();
+        }  
+        return redirect()->route('questions.education.list')->with('message','Education updated Successfully'); 
+    }
+    
+    public function educationDelete($id){
+        $educations = Education::findOrFail($id);
+        $educations->delete();
+        return redirect()->route('questions.education.list')->with('message','Education deleted Successfully');
+    }
+    
+    // EXERCISE
+
+    public function exerciseList(){
+        $exercises = Exercise::all();
+        return view('admin.exercise.list',compact('exercises'));
+    }
+    
+    public function exerciseStore(Request $request){
+        $exercises = new Exercise;
+        $exercises->name = $request->name;
+        $exercises->save();
+        return redirect()->route('questions.exercise.list')->with('message','Exercise added Successfully'); 
+    }
+
+    public function exerciseUpdate(Request $request){
+        $exercises = Exercise::find($request->id);
+        if ($exercises) {
+            $exercises->name = $request->name;
+            $exercises->save();
+        }  
+        return redirect()->route('questions.exercise.list')->with('message','Exercise updated Successfully'); 
+    }
+    
+    public function exerciseDelete($id){
+        $exercises = Exercise::findOrFail($id);
+        $exercises->delete();
+        return redirect()->route('questions.exercise.list')->with('message','Exercise deleted Successfully');
+    }
+
     // GENDER
 
     public function genderList(){
@@ -80,6 +174,35 @@ class AdminController extends BaseController
         return view('admin.feedback.list',compact('feedbacks'));
     }
     
+    // RELIGION
+
+    public function religionList(){
+        $religions = Religion::all();
+        return view('admin.religion.list',compact('religions'));
+    }
+    
+    public function religionStore(Request $request){
+        $religions = new Religion;
+        $religions->name = $request->name;
+        $religions->save();
+        return redirect()->route('questions.religion.list')->with('message','Religion added Successfully'); 
+    }
+
+    public function religionUpdate(Request $request){
+        $religions = Religion::find($request->id);
+        if ($religions) {
+            $religions->name = $request->name;
+            $religions->save();
+        }   
+        return redirect()->route('questions.religion.list')->with('message','Religion updated Successfully'); 
+    }
+    
+    public function religionDelete($id){
+        $religions = Religion::findOrFail($id);
+        $religions->delete();
+        return redirect()->route('questions.religion.list')->with('message','Religion deleted Successfully');
+    }
+
     // SETTING
 
     public function staticPagesList(){
@@ -140,6 +263,11 @@ class AdminController extends BaseController
 
     // SUBSCRIPTION
 
+    public function subscriptionOrder(){
+        $orders = UserSubscription::with('user','subscriptionOrder')->get();
+        return view('admin.subscription.order',compact('orders'));
+    }
+    
     public function subscriptionList(){
         $subscription = Subscription::all();
         return view('admin.subscription.list',compact('subscription'));
@@ -190,5 +318,35 @@ class AdminController extends BaseController
         
         Subscription::where('id',$request->id)->update($insert_data);
         return redirect()->route('subscription.list')->with('message','Subscription updated Successfully'); 
+    }
+
+    // REPORT
+
+    public function reportList(){
+        $report = UserReport::with(['reporter:id,name','reportedUser:id,name,status'])->get(); 
+        return view('admin.report.list',compact('report'));
+    }
+
+    public function userBlock(Request $request){
+        try{
+            $userId = $request->input('id');
+            $user = User::find($userId); 
+            if($user){
+                $user->status = $request->status;
+                $user->fcm_token = null;
+                $user->save();
+
+                $tokens = $user->tokens;
+        
+                foreach ($tokens as $token) {
+                    $token->revoke();
+                }
+                return $this->success([],'User block successfully');
+            }
+            return $this->error('User not found','User not found');
+        }catch(Exception $e){
+            return $this->error($e->getMessage(),'Exception occur');
+        }
+        return $this->error('Something went wrong','Something went wrong');
     }
 }

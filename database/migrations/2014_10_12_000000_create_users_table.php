@@ -30,6 +30,12 @@ return new class extends Migration
             $table->string('lastseen')->nullable();
             $table->string('user_type');
             $table->string('hobbies');
+            $table->string('body_type');
+            $table->string('education');
+            $table->string('exercise');
+            $table->string('religion');
+            $table->longText('about');
+            $table->string('distance_in')->default(0)->comment('0 for yards, 1 for miles');
             $table->string('status')->default(0);
             $table->string('email_verified')->default(0);
             $table->string('phone_verified')->default(0);

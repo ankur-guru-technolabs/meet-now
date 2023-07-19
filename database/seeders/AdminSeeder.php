@@ -31,6 +31,12 @@ class AdminSeeder extends Seeder
             'phone_verified'=> 1,
             'otp_verified'=> 1,
             'hobbies'=> 2,
+            'body_type'=> 2,
+            'education'=> 2,
+            'exercise'=> 2,
+            'religion'=> 2,
+            'aboutb'=> "Hy i am admin",
+            'distance_in'=> 0,
             'password' => bcrypt('123456'),
             'user_type' =>'admin',
         ]);
