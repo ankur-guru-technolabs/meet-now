@@ -171,6 +171,8 @@ class AuthController extends BaseController
 
                         if($user->email_verified == 1 && $user->phone_verified = 1 && $user->otp_verified == 1 && $request->type != 'edit'){
                             $user->tokens()->delete();
+                            $user->fcm_token = $request->fcm_token;
+                            $user->save();
                             $data['token'] = $user->createToken('Auth token')->accessToken;
                         }
                         
