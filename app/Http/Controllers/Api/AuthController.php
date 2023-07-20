@@ -181,7 +181,7 @@ class AuthController extends BaseController
 
                             $title = "Welcome to Meet Now";
                             $message = "Welcome to Meet Now"; 
-                            Helper::send_notification('single', 0, $user->id, $title, 'message', $message, []);
+                            Helper::send_notification('single', 0, $user->id, $title, 'welcome', $message, []);
                         }
                     } 
                     return $this->success($data,'OTP verified successfully');
