@@ -826,8 +826,9 @@ class CustomerController extends BaseController
                 // Notification for video call
 
                 $title = "You have a video call request from ".Auth::user()->name;
-                $message = "You have a video call request from ".Auth::user()->name; 
-                Helper::send_notification('single', Auth::id(), $request->receiver_id, $title, 'video_call', $message, []);
+                $message = "You have a video call request from ".Auth::user()->name;  
+                Helper::send_notification('single', Auth::id(), $request->receiver_id, $title, 'video_call', $message, $data);
+
 
                 return $this->success($data,'Video call done');
             }
