@@ -804,23 +804,41 @@ class CustomerController extends BaseController
             }
 
             if (Auth::user()) { 
-                $appID =  env("AGORA_APP_ID", "d13ef194c8e74a21be2d1e7672792be3");
-                $appCertificate = env("AGORA_APP_CERTIFICATE", "cbef905ce5c5413884623f8fc0567215");
+                $appID =  env("AGORA_APP_ID", "4f6f13fdda8c4d039249274d1b8ac229");
+                $appCertificate = env("AGORA_APP_CERTIFICATE", "a05000ab3f024995b468bbec55fbb7b4");
 
                 $channelName = $this->generateRandomChannel(8);
                 $userId = $this->generateRandomUid();
-                $role = RtcTokenBuilder::RoleAttendee;
+                $role = RtcTokenBuilder::RolePublisher;
 
                 $expireTimeInSeconds = 3600;
                 $currentTimestamp = now()->getTimestamp();
                 $privilegeExpiredTs = $currentTimestamp + $expireTimeInSeconds;
 
                 $rtcToken1 = RtcTokenBuilder::buildTokenWithUserAccount($appID, $appCertificate, $channelName, $userId, $role, $privilegeExpiredTs);
+
+                $sender_image = asset('images/meet-now.png');
+                $login_user_image_data = UserPhoto::where('user_id',Auth::id())->where('type','profile_image')->first();
+
+                if(!empty($login_user_image_data)){
+                    $sender_image = $login_user_image_data->profile_photo;
+                }
+
+                $userIdReceiver = $this->generateRandomUid();
+                $roleReceiver = RtcTokenBuilder::RoleSubscriber;
+                $rtcTokenReceiver = RtcTokenBuilder::buildTokenWithUserAccount($appID, $appCertificate, $channelName, $userIdReceiver, $roleReceiver, $privilegeExpiredTs);
+
                 $data = [
-                    'sender_id'     =>Auth::id(),
-                    'receiver_u_id' =>$userId,
-                    'channel_name'  => $channelName,
-                    'receiver_token'=>$rtcToken1,
+                    'sender_id'     =>  Auth::id(),
+                    'receiver_id'   =>  $request->receiver_id,
+                    'receiver_u_id' =>  $userId,
+                    'channel_name'  =>  $channelName,
+                    'receiver_token'=>  $rtcToken1,
+                    'sender_name'   =>  Auth::user()->full_name,
+                    'sender_image'  =>  $sender_image,
+                    'userIdReceiver'  =>  $userIdReceiver,
+                    'roleReceiver'  =>  $roleReceiver,
+                    'rtcTokenReceiver'  =>  $rtcTokenReceiver,
                 ];    
 
                 // Notification for video call

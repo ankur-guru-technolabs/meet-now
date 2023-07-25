@@ -115,5 +115,9 @@ Route::get('/message-delete', [LoginController::class, 'messageDelete'])->name('
 
 Route::post('/logout', function () {
     Auth::logout();
+
+    Session::forget('session_start_time');
+    Session::forget('session_lifetime');
+    
     return redirect('/');
 })->name('logout');

@@ -19,7 +19,7 @@
                         <li class="nav-item">
                             <a class="nav-link" href="{{ route('logout') }}" onclick="event.preventDefault();  document.getElementById('logout-form').submit();">
                                 <i class="fa fa-user me-sm-1"></i>
-                                <span class="d-sm-inline d-none">Sign Out</span>
+                                <span>Sign Out</span>
                             </a>
                         </li>
                     </ul>

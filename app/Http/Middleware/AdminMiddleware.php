@@ -28,6 +28,7 @@ class AdminMiddleware
                 Session::forget('session_lifetime');
                 return redirect('/');
             }
+            Session::put('session_start_time', time());
 
             return $next($request);
         }
