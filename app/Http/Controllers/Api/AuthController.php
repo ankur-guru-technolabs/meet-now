@@ -207,6 +207,7 @@ class AuthController extends BaseController
             $data['exercise']      = Exercise::all();
             $data['hobby']         = Hobby::all();
             $data['religion']      = Religion::all();
+            $data['gender']        = Gender::all();
             return $this->success($data,'Registration form data');
         }catch(Exception $e){
             return $this->error($e->getMessage(),'Exception occur');

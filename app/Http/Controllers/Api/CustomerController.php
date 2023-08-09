@@ -29,6 +29,7 @@ use DateTime;
 use Exception;
 use Helper; 
 use Validator;
+use DB;
 
 class CustomerController extends BaseController
 {
@@ -443,12 +444,14 @@ class CustomerController extends BaseController
                                         ->select('user_likes.id', 'user_likes.like_from','user_likes.like_to','user_likes.match_id')
                                         ->get();
 
-            $data['matched_user_listing'] = $matched_user_listing->map(function ($user){
+            $today_date         = date('Y-m-d H:i:s');
+            $data['matched_user_listing'] = $matched_user_listing->map(function ($user,$today_date){
                                             if($user->users->isNotEmpty()){
                                                 $profile_photo_media = $user->users->first()->media->firstWhere('type', 'profile_image');
                                                 $user->user_id = $user->users->first()->id;
                                                 $user->name = $user->users->first()->name;
                                                 $user->profile_photo = $profile_photo_media->profile_photo ?? null;
+                                                $user->active_plan = UserSubscription::where('user_id',$user->users->first()->id)->where('expire_date','>',$today_date)->count();
                                                 unset($user->users);
                                             }
                                             return $user;
@@ -485,8 +488,9 @@ class CustomerController extends BaseController
                                     ->orderBy('chats.created_at', 'desc')
                                     ->orderBy('chats.id', 'desc')
                                     ->paginate($request->input('perPage'), ['*'], 'page', $request->input('page'));
-            
-            $data['chat_list']  =   $chat_list->map(function ($user){
+                                    
+            $today_date         = date('Y-m-d H:i:s');
+            $data['chat_list']  =   $chat_list->map(function ($user,$today_date){
                                             if($user->sender_id == Auth::id() && $user->userReceiver->isNotEmpty()){
                                                 $profile_photo_media = $user->userReceiver->first()->media->firstWhere('type', 'profile_image'); 
                                                 $user->user_id = $user->userReceiver->first()->id;
@@ -494,6 +498,7 @@ class CustomerController extends BaseController
                                                 $user->profile_photo = $profile_photo_media->profile_photo ?? null;
                                                 $user->unread_message_count = (int)$user->unread_message_count;
                                                 $user->last_message = $user->last_message;
+                                                $user->active_plan = UserSubscription::where('user_id',$user->userReceiver->first()->id)->where('expire_date','>',$today_date)->count();
                                                 unset($user->userReceiver);
                                             }
                                             if($user->sender_id != Auth::id() && $user->users->isNotEmpty()){
@@ -503,6 +508,7 @@ class CustomerController extends BaseController
                                                 $user->profile_photo = $profile_photo_media->profile_photo ?? null;
                                                 $user->unread_message_count = (int)$user->unread_message_count;
                                                 $user->last_message = $user->last_message;
+                                                $user->active_plan = UserSubscription::where('user_id',$user->users->first()->id)->where('expire_date','>',$today_date)->count();
                                                 unset($user->users);
                                             }
                                             return $user;
@@ -917,8 +923,8 @@ class CustomerController extends BaseController
                     $notification->date = date('d M', strtotime($notification->created_at));
                 } 
 
-                $profile_photo_media = $notification->notificationSender->first()->media->firstWhere('type', 'profile_image');
-                $notification->name = $notification->notificationSender->first()->name;
+                $profile_photo_media = !empty($notification->notificationSender->first()) ? $notification->notificationSender->first()->media->firstWhere('type', 'profile_image') : null;
+                $notification->name = !empty($notification->notificationSender->first()) ? $notification->notificationSender->first()->name : 'Admin';
                 $notification->profile_photo = $profile_photo_media->profile_photo ?? null;
                 unset($notification->notificationSender);
                 
