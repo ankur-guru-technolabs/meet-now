@@ -198,7 +198,7 @@ class CustomerController extends BaseController
                     $user_photo_data = $this->uploadMediaFiles($mediaFiles, $user_data->id);
                 }
 
-                if (!empty($thumbnailImage) && isset($request->is_thumbnail_change) && $request->is_thumbnail_change == 1) {
+                if (isset($request->is_thumbnail_change) && $request->is_thumbnail_change == 1) {
                     $this->deleteUserPhotos(null, $request->user_id, 'thumbnail_image');
                     $user_photo_data[] = $this->uploadImageFile($thumbnailImage, $user_data->id, 'thumbnail_image');
                 }
