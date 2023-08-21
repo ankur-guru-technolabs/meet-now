@@ -415,6 +415,7 @@ class CustomerController extends BaseController
                                             $distance = round($c,2);  
                                         }
                                         $user->distance = $distance;
+                                        $user->distance_in = $request->distance_in;
                                         if($distance >= $request->min_distance && $distance <= $request->max_distance ){
                                             return $user;
                                         }
