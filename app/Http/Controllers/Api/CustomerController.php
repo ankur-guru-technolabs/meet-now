@@ -375,7 +375,7 @@ class CustomerController extends BaseController
                                 ->where('is_hide_profile', 0)
                                 ->where('gender', $request->interested_gender)
                                 ->where('interested_gender', Auth::user()->gender)
-                                ->whereBetween('age', [$request->min_age, $request->max_age])
+                                ->whereBetween(\DB::raw('CAST(age AS SIGNED)'), [$request->min_age, $request->max_age])
                                 ->where(function($query) use ($request) {
                                     if(isset($request->hobbies)) {
                                         $hobby_ids = explode(',', $request->hobbies);
