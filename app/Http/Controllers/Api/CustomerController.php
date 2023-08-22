@@ -5,9 +5,13 @@ namespace App\Http\Controllers\Api;
 use Illuminate\Support\Facades\File;
 use App\Http\Controllers\BaseController;
 use App\Http\Controllers\Api\AuthController;
+use App\Models\Bodytype;
 use App\Models\Chat;
+use App\Models\Education;
+use App\Models\Exercise;
 use App\Models\Gender;
 use App\Models\Hobby;
+use App\Models\Religion;
 use App\Models\User;
 use App\Models\UserLikes;
 use App\Models\UserPhoto;
@@ -21,10 +25,6 @@ use App\Models\UserSubscription;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Lib\RtcTokenBuilder;
-use App\Models\Bodytype;
-use App\Models\Education;
-use App\Models\Exercise;
-use App\Models\Religion;
 use DateTime;
 use Exception;
 use Helper; 
@@ -232,14 +232,17 @@ class CustomerController extends BaseController
 
     public function getFilterData(){
         try{ 
-            $data['user']           = User::select('id','hobbies','interested_gender')->find(Auth::id());
+            $data['user']           = User::select('id','hobbies','interested_gender','body_type','education','religion')->find(Auth::id());
             $hobbies_id             = $data['user']['hobbies']; 
 
             $hobbies_array          = explode(",", $hobbies_id); 
             $data['hobbies_new']    = array_map('intval', $hobbies_array);
 
-            $data['hobby']          = Hobby::select('id','name')->get();
+            $data['body_type']      = Bodytype::select('id','name')->get();
+            $data['education']      = Education::select('id','name')->get();
             $data['gender']         = Gender::select('id','gender')->get();
+            $data['hobby']          = Hobby::select('id','name')->get();
+            $data['religion']       = Religion::select('id','name')->get();
             $data['min_age']        = (int)env('MIN_AGE', 18);
             $data['max_age']        = (int)env('MAX_AGE', 30);
             $data['min_distance']   = (int)env('MIN_DISTANCE', 1);
@@ -382,6 +385,15 @@ class CustomerController extends BaseController
                                         foreach($hobby_ids as $id) {
                                             $query->orWhereRaw("FIND_IN_SET($id, hobbies)");
                                         }
+                                    }
+                                    if(isset($request->body_type)) {
+                                        $query->where('body_type',$request->body_type);
+                                    }
+                                    if(isset($request->education)) {
+                                        $query->where('education',$request->education);
+                                    }
+                                    if(isset($request->religion)) {
+                                        $query->where('religion',$request->religion);
                                     }
                                 })
                                 ->leftJoin('user_likes as ul1', function ($join) {

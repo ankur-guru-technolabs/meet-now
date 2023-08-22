@@ -54,6 +54,9 @@
                                             <option value="age" {{ in_array('age', $subscription->allowed_subscription) ? 'selected' : '' }}>Age</option>
                                             <option value="location" {{ in_array('location', $subscription->allowed_subscription) ? 'selected' : '' }}>Location</option>
                                             <option value="hobby" {{ in_array('hobby', $subscription->allowed_subscription) ? 'selected' : '' }}>Hobby</option>
+                                            <option value="body_type" {{ in_array('body_type', $subscription->allowed_subscription) ? 'selected' : '' }}>Bodytype</option>
+                                            <option value="education" {{ in_array('education', $subscription->allowed_subscription) ? 'selected' : '' }}>Education</option>
+                                            <option value="religion" {{ in_array('religion', $subscription->allowed_subscription) ? 'selected' : '' }}>Religion</option>
                                         </select>
                                     </div>
                                     @if($errors->has('search_filters'))
