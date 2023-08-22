@@ -83,6 +83,7 @@ class User extends Authenticatable
         'otp_verified'=> 'int',
         'email_verified_at' => 'datetime',
         'is_notification_mute'=> 'int', 
+        'is_hide_profile'=> 'int', 
     ];
 
     public function activeSubscription()
