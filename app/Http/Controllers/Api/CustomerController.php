@@ -387,13 +387,13 @@ class CustomerController extends BaseController
                                         }
                                     }
                                     if(isset($request->body_type)) {
-                                        $query->where('body_type',$request->body_type);
+                                        $query->whereIn('body_type', explode(',', $request->body_type));
                                     }
                                     if(isset($request->education)) {
-                                        $query->where('education',$request->education);
+                                        $query->whereIn('education', explode(',', $request->body_type));
                                     }
                                     if(isset($request->religion)) {
-                                        $query->where('religion',$request->religion);
+                                        $query->whereIn('religion', explode(',', $request->religion));
                                     }
                                 })
                                 ->leftJoin('user_likes as ul1', function ($join) {
