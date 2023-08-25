@@ -706,7 +706,7 @@ class CustomerController extends BaseController
                                         ->select('user_likes.id', 'user_likes.like_from','user_likes.like_to')
                                         ->paginate($request->input('perPage'), ['*'], 'page', $request->input('page'));
 
-            $data['user_likes_listing'] = $user_likes_listing->map(function ($user){
+            $data['user_listing'] = $user_likes_listing->map(function ($user){
                                             if($user->users->isNotEmpty()){
                                                 $profile_photo_media = $user->users->first()->media->firstWhere('type', 'profile_image');
                                                 $user->user_id = $user->users->first()->id;
@@ -752,7 +752,7 @@ class CustomerController extends BaseController
                                         ->select('user_views.id', 'user_views.view_from','user_views.view_to')
                                         ->paginate($request->input('perPage'), ['*'], 'page', $request->input('page'));
 
-            $data['user_view_listing'] = $user_view_listing->map(function ($user){
+            $data['user_listing'] = $user_view_listing->map(function ($user){
                                             if($user->users->isNotEmpty()){
                                                 $profile_photo_media = $user->users->first()->media->firstWhere('type', 'profile_image');
                                                 $user->user_id = $user->users->first()->id;
