@@ -986,6 +986,28 @@ class CustomerController extends BaseController
         return $this->error('Something went wrong','Something went wrong');
     }
 
+    // GHOST MODE SETTING
+
+    public function ghostModeSetting(){
+        try{
+            $user_data = User::where('id',Auth::id())->first();
+            if($user_data['is_hide_profile'] == 0){
+                $user_data['is_hide_profile'] = 1;
+                $user_data->save();
+                return $this->success([],'Ghost mode enable successfully');
+            }
+
+            if($user_data['is_hide_profile'] == 1){
+                $user_data['is_hide_profile'] = 0;
+                $user_data->save();
+                return $this->success([],'Ghost mode disable successfully');
+            }
+        }catch(Exception $e){
+            return $this->error($e->getMessage(),'Exception occur');
+        }
+        return $this->error('Something went wrong','Something went wrong');
+    }
+
     // SUBSCRIPTION LISTING
     
     public function subscriptionList(Request $request){
