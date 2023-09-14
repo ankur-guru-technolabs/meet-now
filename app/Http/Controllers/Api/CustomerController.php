@@ -898,6 +898,41 @@ class CustomerController extends BaseController
         return $randomString;
     }
 
+    public function declineVideoCall(Request $request)
+    {
+        try
+        {
+            $validateData = Validator::make($request->all(),[
+                'receiver_id'  => 'required',
+            ]);
+    
+            if ($validateData->fails()) {
+                return $this->error($validateData->errors(),'Validation error',403);
+            }
+
+            $user = User::where('id',Auth::id())->first();
+
+            $receiver_img = UserPhoto::where('user_id',Auth::id())->where('type','profile_image')->first();
+            if(!empty($receiver_img)){
+                $receiver_image = $receiver_img->profile_photo;
+            }
+            $data = [
+                'sender_id'     =>  Auth::id(), 
+                'receiver_id'   =>  $request->receiver_id, 
+                'receiver_image'  =>  $receiver_image,           
+            ];    
+            
+            $title = "Video call is decline by ".$user->full_name;
+            $message = "Video call is decline by ".$user->full_name; 
+
+            Helper::send_notification('single', Auth::id(), $request->receiver_id, $title, 'decline_call', $message, $data);
+            return $this->success([],'Video call declined');
+        }
+        catch(Exception $e){
+            return $this->error($e->getMessage(),'Exception occur!');
+        }
+    }
+
     // FCM TOKEN SET
 
     public function updateFcmToken(Request $request){
