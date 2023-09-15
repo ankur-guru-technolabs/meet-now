@@ -40,6 +40,7 @@ Route::middleware('auth:api')->group(function () {
     Route::get('get-static-page', [CustomerController::class,'staticPage'])->name('get-static-page');
     Route::post('update-location', [CustomerController::class,'updateLocation'])->name('update-location');
 	Route::post('single-video-call', [CustomerController::class,'singleVideoCall'])->name('single-video-call');
+    Route::post('decline-video-call', [CustomerController::class,'declineVideoCall'])->name('decline-video-call');
     Route::post('update-fcm-token', [CustomerController::class,'updateFcmToken'])->name('update-fcm-token');
     Route::get('get-notification-list', [CustomerController::class,'notificationList'])->name('get-notification-list');
     Route::get('notification-read', [CustomerController::class,'notificationRead'])->name('notification-read');

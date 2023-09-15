@@ -582,11 +582,24 @@ class CustomerController extends BaseController
             $chats->type        = $request->type;
             $chats->save();
 
-            // Notification for message send
+            $sender_image =  asset('images/meet-now.png');
+            $login_user_image_data = UserPhoto::where('user_id',Auth::id())->where('type','profile_image')->first();
 
+            if(!empty($login_user_image_data)){
+                $sender_image = $login_user_image_data->profile_photo;
+            }
+            // Notification for message send
+            $custom = [
+                'sender_id'     =>  Auth::id(),
+                'match_id'      =>  $request->match_id,
+                'sender_name'   =>  Auth::user()->name,
+                'sender_image'  =>  $sender_image,
+                'image'         =>  $sender_image,
+            ]; 
+            
             $title = Auth::user()->name." sent you a message";
             $message = Auth::user()->name." sent you a message"; 
-            Helper::send_notification('single', Auth::id(), $request->receiver_id, $title, 'message', $message, []);
+            Helper::send_notification('single', Auth::id(), $request->receiver_id, $title, 'message', $message, $custom);
 
             return $this->success([],'Message send successfully');
         }catch(Exception $e){
@@ -855,12 +868,13 @@ class CustomerController extends BaseController
                     'receiver_u_id' =>  $userId,
                     'channel_name'  =>  $channelName,
                     'receiver_token'=>  $rtcToken1,
-                    'sender_name'   =>  Auth::user()->full_name,
+                    'sender_name'   =>  Auth::user()->name,
                     'sender_image'  =>  $sender_image,
+                    'image'         =>  $sender_image,
                     'userIdReceiver'  =>  $userIdReceiver,
                     'roleReceiver'  =>  $roleReceiver,
                     'rtcTokenReceiver'  =>  $rtcTokenReceiver,
-                ];    
+                ];   
 
                 // Notification for video call
 
@@ -912,19 +926,23 @@ class CustomerController extends BaseController
 
             $user = User::where('id',Auth::id())->first();
 
-            $receiver_img = UserPhoto::where('user_id',Auth::id())->where('type','profile_image')->first();
-            if(!empty($receiver_img)){
-                $receiver_image = $receiver_img->profile_photo;
+            $receiver_image =  asset('images/meet-now.png');
+            $login_user_image_data = UserPhoto::where('user_id',Auth::id())->where('type','profile_image')->first();
+
+            if(!empty($login_user_image_data)){
+                $receiver_image = $login_user_image_data->profile_photo;
             }
+            
             $data = [
                 'sender_id'     =>  Auth::id(), 
                 'receiver_id'   =>  $request->receiver_id, 
-                'receiver_image'  =>  $receiver_image,           
-            ];    
-            
-            $title = "Video call is decline by ".$user->full_name;
-            $message = "Video call is decline by ".$user->full_name; 
+                'receiver_image'  =>  $receiver_image,  
+                'image'         =>  $receiver_image,         
+            ];      
 
+            $title = "Video call is decline by ".$user->name;
+            $message = "Video call is decline by ".$user->name; 
+ 
             Helper::send_notification('single', Auth::id(), $request->receiver_id, $title, 'decline_call', $message, $data);
             return $this->success([],'Video call declined');
         }
