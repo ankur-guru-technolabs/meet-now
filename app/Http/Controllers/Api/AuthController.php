@@ -197,6 +197,34 @@ class AuthController extends BaseController
         return $this->error('Something went wrong','Something went wrong');
     }
 
+    // CHECK USER EXIST OR NOT 
+
+    public function checkSocailUser(Request $request)
+    {
+        try{
+            $validateData = Validator::make($request->all(), [
+                'social_id' => 'required',
+            ]);
+
+            if ($validateData->fails()) {
+                return $this->error($validateData->errors(),'Validation error',403);
+            } 
+
+            $findUser = User::where('google_id', $request->social_id)->orWhere('facebook_id',$request->social_id)->first();
+            if($findUser){
+                $findUser->tokens()->delete();
+                $data['token'] = $findUser->createToken('Auth token')->accessToken;
+                return $this->success($data,'Login successfully');
+            }else{
+                $data['social_id']   = $request->social_id;
+                return $this->success($data,'Signup successfully');
+            }
+        }catch(Exception $e){
+            return $this->error($e->getMessage(),'Exception occur');
+        }
+        return $this->error('Something went wrong','Something went wrong');
+    }
+
     // RETRIVE DATA WHICH ARE NEEDED FOR REGISTRATION FORM
 
     public function getRegistrationFormData(){

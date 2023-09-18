@@ -21,7 +21,11 @@ Route::post('verify-otp', [AuthController::class, 'verifyOtp'])->name('verify-ot
 Route::get('get-registration-form-data', [AuthController::class, 'getRegistrationFormData'])->name('get-registration-form-data');
 Route::post('register', [AuthController::class, 'register'])->name('register');
 Route::post('email-exist', [AuthController::class, 'emailExist'])->name('email-exist');
- 
+
+// FOR GOOGLE/FACEBOOK CURRENTLY THIS IS USED
+
+Route::post('check-social-user', [AuthController::class,'checkSocailUser'])->name('check-social-login');
+
 Route::middleware('auth:api')->group(function () {
     Route::get('get-user-profile/{id?}', [CustomerController::class,'getProfile'])->name('get-user-profile');
     Route::get('get-filter-data', [CustomerController::class,'getFilterData'])->name('get-filter-data');
