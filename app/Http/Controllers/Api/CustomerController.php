@@ -302,18 +302,36 @@ class CustomerController extends BaseController
                 UserLikes::where('like_from',$input['like_to'])->where('like_to',$input['like_from'])->where('status',$input['status'])->update(
                     ['match_id' => $input['match_id'],'match_status' => $input['match_status'],'matched_at' => $input['matched_at']]);
                 
+                
+                $receiver_data = User::where('id',$input['like_to'])->first();
+
+                $sender_image =  asset('images/meet-now.png');
+                $login_user_image_data = UserPhoto::where('user_id',Auth::id())->where('type','profile_image')->first();
+    
+                if(!empty($login_user_image_data)){
+                    $sender_image = $login_user_image_data->profile_photo;
+                }
+                
+                $receiver_image =  asset('images/meet-now.png');
+                $login_user_image_data = UserPhoto::where('user_id',$input['like_to'])->where('type','profile_image')->first();
+    
+                if(!empty($login_user_image_data)){
+                    $receiver_image = $login_user_image_data->profile_photo;
+                }
+                
                 // Notification for match profile both side
                 
                 $title = "Congrats! You have a match with ".Auth::user()->name;
                 $message = "Congrats! You have a match with ".Auth::user()->name; 
-                Helper::send_notification('single', Auth::id(), $input['like_to'], $title, 'match', $message, []);
-
+                $data_for_receiver = array('match_id' => $input['match_id'],'sender_id'=> $input['like_to'],'sender_name' => $receiver_data['name'],'sender_image'=> $receiver_image,'receiver_id'=> Auth::id(),'receiver_name' => Auth::user()->name,'receiver_image'=> $sender_image);
+                Helper::send_notification('single', Auth::id(), $input['like_to'], $title, 'match', $message, $data_for_receiver);
+                
                 // Notification for match profile both side
-
-                $receiver_data = User::where('id',$input['like_to'])->first();
+                
                 $title = "Congrats! You have a match with ". $receiver_data['name'];
                 $message = "Congrats! You have a match with ". $receiver_data['name']; 
-                Helper::send_notification('single', $input['like_to'], Auth::id(), $title, 'match', $message, []);
+                $data_for_sender = array('match_id' => $input['match_id'],'sender_id'=> Auth::id(),'sender_name' => Auth::user()->name,'sender_image'=> $sender_image,'receiver_id'=> $input['like_to'],'receiver_name' => $receiver_data['name'],'receiver_image'=> $receiver_image);
+                Helper::send_notification('single', $input['like_to'], Auth::id(), $title, 'match', $message, $data_for_sender);
             }
 
             if(!$same_request){
