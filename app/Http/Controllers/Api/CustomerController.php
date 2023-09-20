@@ -521,17 +521,17 @@ class CustomerController extends BaseController
                                 ->whereNull('ul1.id')
                                 ->whereNull('ul2.id')
                                 ->where('users.updated_at', '>=', now()->subMinutes(5))
-                                ->select('users.id', 'name', 'location', 'age','live_latitude','live_longitude')
+                                ->select('users.id', 'name', 'location', 'age','latitude','longitude')
                                 ->paginate($request->input('perPage'), ['*'], 'page', $request->input('page'));
 
 
             $data['user_list']  =   $user_list->map(function ($user) use ($request, $auth_lat1, $auth_lon1, $earthRadius) {
-                                        if(!empty($user->live_latitude) && !empty($user->live_longitude)){
+                                        if(!empty($user->latitude) && !empty($user->longitude)){
                                             $profile_photo_media = $user->media->firstWhere('type', 'profile_image');
                                             $user->profile_photo = $profile_photo_media->profile_photo ?? null;
                                             unset($user->media);
-                                            $lat2 = deg2rad($user->live_latitude);
-                                            $lon2 = deg2rad($user->live_longitude);
+                                            $lat2 = deg2rad($user->latitude);
+                                            $lon2 = deg2rad($user->longitude);
                                             $dLat = $lat2 - $auth_lat1;
                                             $dLon = $lon2 - $auth_lon1;
                                             $a = sin($dLat/2) * sin($dLat/2) + cos($auth_lat1) * cos($lat2) * sin($dLon/2) * sin($dLon/2);
@@ -548,7 +548,7 @@ class CustomerController extends BaseController
                                                 return $user;
                                             }
                                         }
-                                    })->filter();
+                                    });
 
             $data['current_page'] = $user_list->currentPage();
             $data['per_page']     = $user_list->perPage();
