@@ -32,6 +32,7 @@ Route::middleware('auth:api')->group(function () {
     Route::post('update-user-profile', [CustomerController::class,'updateProfile'])->name('update-user-profile');
     Route::post('swipe-profile', [CustomerController::class,'swipeProfile'])->name('swipe-profile');
     Route::post('discover-profile', [CustomerController::class,'discoverProfile'])->name('discover-profile');
+    Route::post('card-discover-profile', [CustomerController::class,'cardDiscoverProfile'])->name('card-discover-profile');
     Route::get('matched-user-list', [CustomerController::class,'matchedUserList'])->name('matched-user-list');
     Route::get('chat-list', [CustomerController::class,'chatList'])->name('chat-list');
     Route::post('change-read-status', [CustomerController::class,'changeReadStatus'])->name('change-read-status');

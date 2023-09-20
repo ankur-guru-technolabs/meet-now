@@ -461,6 +461,108 @@ class CustomerController extends BaseController
         }
         return $this->error('Something went wrong','Something went wrong');
     }
+
+    // CARD DISCOVER PROFILE
+
+    public function cardDiscoverProfile(Request $request){ 
+        try{
+            $validateData = Validator::make($request->all(), [
+                'interested_gender' => 'required',
+                // 'hobbies' => 'required',
+                'min_age'     => 'required',
+                'max_age'     => 'required|gte:min_age',
+                'min_distance'=> 'required',
+                'max_distance'=> 'required|gte:min_distance',
+                'latitude'    => 'required',
+                'longitude'   => 'required',
+                'distance_in' => 'required',
+            ]);
+
+            if ($validateData->fails()) {
+                return $this->error($validateData->errors(),'Validation error',403);
+            }
+            $auth_lat1 = deg2rad($request->latitude);
+            $auth_lon1 = deg2rad($request->longitude);
+
+            $earthRadius = 3959; 
+
+            $user_list  = User::where('users.id', '!=', Auth::id())
+                                ->where('user_type', 'user')
+                                ->where('users.status', 1)
+                                ->where('is_hide_profile', 0)
+                                ->where('gender', $request->interested_gender)
+                                ->where('interested_gender', Auth::user()->gender)
+                                ->whereBetween(\DB::raw('CAST(age AS SIGNED)'), [$request->min_age, $request->max_age])
+                                ->where(function($query) use ($request) {
+                                    if(isset($request->hobbies)) {
+                                        $hobby_ids = explode(',', $request->hobbies);
+                                        foreach($hobby_ids as $id) {
+                                            $query->orWhereRaw("FIND_IN_SET($id, hobbies)");
+                                        }
+                                    }
+                                    if(isset($request->body_type)) {
+                                        $query->whereIn('body_type', explode(',', $request->body_type));
+                                    }
+                                    if(isset($request->education)) {
+                                        $query->whereIn('education', explode(',', $request->body_type));
+                                    }
+                                    if(isset($request->religion)) {
+                                        $query->whereIn('religion', explode(',', $request->religion));
+                                    }
+                                })
+                                ->leftJoin('user_likes as ul1', function ($join) {
+                                    $join->on('users.id', '=', 'ul1.like_from')
+                                         ->where('ul1.like_to', '=', Auth::id());
+                                })
+                                ->leftJoin('user_likes as ul2', function ($join) {
+                                    $join->on('users.id', '=', 'ul2.like_to')
+                                         ->where('ul2.like_from', '=', Auth::id());
+                                })
+                                ->whereNull('ul1.id')
+                                ->whereNull('ul2.id')
+                                ->where('users.updated_at', '>=', now()->subMinutes(5))
+                                ->select('users.id', 'name', 'location', 'age','live_latitude','live_longitude')
+                                ->paginate($request->input('perPage'), ['*'], 'page', $request->input('page'));
+
+
+            $data['user_list']  =   $user_list->map(function ($user) use ($request, $auth_lat1, $auth_lon1, $earthRadius) {
+                                        if(!empty($user->live_latitude) && !empty($user->live_longitude)){
+                                            $profile_photo_media = $user->media->firstWhere('type', 'profile_image');
+                                            $user->profile_photo = $profile_photo_media->profile_photo ?? null;
+                                            unset($user->media);
+                                            $lat2 = deg2rad($user->live_latitude);
+                                            $lon2 = deg2rad($user->live_longitude);
+                                            $dLat = $lat2 - $auth_lat1;
+                                            $dLon = $lon2 - $auth_lon1;
+                                            $a = sin($dLat/2) * sin($dLat/2) + cos($auth_lat1) * cos($lat2) * sin($dLon/2) * sin($dLon/2);
+                                            $c = $earthRadius * 2 * atan2(sqrt($a), sqrt(1 - $a));
+                                            if($request->distance_in == 0){
+                                                $distance = round($c * 1760,2);  
+                                            }
+                                            if($request->distance_in == 1){
+                                                $distance = round($c,2);  
+                                            }
+                                            $user->distance = $distance;
+                                            $user->distance_in = $request->distance_in;
+                                            if($distance >= $request->min_distance && $distance <= $request->max_distance ){
+                                                return $user;
+                                            }
+                                        }
+                                    })->filter();
+
+            $data['current_page'] = $user_list->currentPage();
+            $data['per_page']     = $user_list->perPage();
+            $data['total']        = $user_list->total();
+            $data['last_page']    = $user_list->lastPage();                        
+            // if (empty($data['user_list'][0])) {
+            //     $data['user_list'] = [];
+            // }
+            return $this->success($data,'Discovery list');
+        }catch(Exception $e){
+            return $this->error($e->getMessage(),'Exception occur');
+        }
+        return $this->error('Something went wrong','Something went wrong');
+    }
   
     // MATCHED USER LISTING
     
@@ -1136,9 +1238,10 @@ class CustomerController extends BaseController
             $is_purchased = UserSubscription::where('user_id',$user_id)->where('expire_date','>',$today_date)->first();
             if($is_purchased != null){
                 $data= Subscription::where('id',$is_purchased->subscription_id)->first();
-                return $this->success($data,'Active subscription successfully');
+            }else{
+                $data= Subscription::where('plan_type','free')->first();
             }
-            return $this->success(null,'You have no active subscription');
+            return $this->success($data,'Active subscription successfully');
         }catch(Exception $e){
             return $this->error($e->getMessage(),'Exception occur');
         }
