@@ -1229,7 +1229,7 @@ class CustomerController extends BaseController
         return $this->error('Something went wrong','Something went wrong');
     }
 
-    // ACTIVE SUBSCRIPTION LISTING
+    // ACTIVE SUBSCRIPTION LISTING 
     
     public function activeSubscriptionList(Request $request){
         try{
