@@ -36,7 +36,7 @@ return new class extends Migration
             $table->string('religion');
             $table->longText('about');
             $table->string('distance_in')->default(0)->comment('0 for yards, 1 for miles');
-            $table->string('status')->default(0);
+            $table->string('status')->default(1);
             $table->string('email_verified')->default(0);
             $table->string('phone_verified')->default(0);
             $table->string('otp_verified')->default(0);

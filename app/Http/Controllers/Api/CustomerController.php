@@ -1241,6 +1241,9 @@ class CustomerController extends BaseController
             }else{
                 $data= Subscription::where('plan_type','free')->first();
             }
+            $today_like_count       = UserLikes::where('like_from',Auth::user()->id)->whereDate('created_at', date('Y-m-d'))->count();
+            $data['remaining_likes'] = (int)$data['like_per_day'] - $today_like_count;
+            
             return $this->success($data,'Active subscription successfully');
         }catch(Exception $e){
             return $this->error($e->getMessage(),'Exception occur');
