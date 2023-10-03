@@ -84,6 +84,7 @@ class Helper
                 "data" => [
                     "title" => $title,
                     // "body" => $message,  
+                    "click_action"=> "FLUTTER_NOTIFICATION_CLICK",
                     "type" => $type,
                     "sender_id" => $sender_id,
                     "receiver_id" => $receiver_id,
