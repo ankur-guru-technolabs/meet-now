@@ -218,7 +218,7 @@ class CustomerController extends BaseController
                         $user_data->otp = $otp;
                     }
                 }
-                return $this->success($user_data,'You profile successfully updated');
+                return $this->success($user_data,'Your profile successfully updated');
             }
             return $this->error('Something went wrong','Something went wrong');
         }catch(Exception $e){
@@ -349,14 +349,16 @@ class CustomerController extends BaseController
 
                 // Notification for profile like
 
-                $title = "You profile is liked by ".Auth::user()->name;
-                $message = "You profile is liked by ".Auth::user()->name; 
-                $another_user_data   =  User::with('media','activeSubscription')->find($input['like_to']);
-                if($another_user_data->activeSubscription == null){
-                    $title = "You profile is liked by someone.";
-                    $message = "You profile is liked by someone."; 
+                if($input['status'] == 1){
+                    $title = "Your profile is liked by ".Auth::user()->name;
+                    $message = "Your profile is liked by ".Auth::user()->name; 
+                    $another_user_data   =  User::with('media','activeSubscription')->find($input['like_to']);
+                    if($another_user_data->activeSubscription == null){
+                        $title = "Your profile is liked by someone.";
+                        $message = "Your profile is liked by someone."; 
+                    }
+                    Helper::send_notification('single', Auth::id(), $input['like_to'], $title, 'like', $message, []);
                 }
-                Helper::send_notification('single', Auth::id(), $input['like_to'], $title, 'like', $message, []);
             }
 
             return $this->success([],'Profile liked successfully');
