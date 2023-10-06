@@ -410,7 +410,7 @@ class CustomerController extends BaseController
                                         $query->whereIn('body_type', explode(',', $request->body_type));
                                     }
                                     if(isset($request->education)) {
-                                        $query->whereIn('education', explode(',', $request->body_type));
+                                        $query->whereIn('education', explode(',', $request->education));
                                     }
                                     if(isset($request->religion)) {
                                         $query->whereIn('religion', explode(',', $request->religion));
