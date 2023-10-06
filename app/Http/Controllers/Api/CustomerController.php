@@ -392,31 +392,34 @@ class CustomerController extends BaseController
 
             $earthRadius = 3959; 
 
-            $data['user_list'] = User::where('users.id', '!=', Auth::id())
+            $query  = User::where('users.id', '!=', Auth::id())
                                 ->where('user_type', 'user')
                                 ->where('users.status', 1)
                                 ->where('is_hide_profile', 0)
                                 ->where('gender', $request->interested_gender)
                                 ->where('interested_gender', Auth::user()->gender)
-                                ->whereBetween(\DB::raw('CAST(age AS SIGNED)'), [$request->min_age, $request->max_age])
-                                ->where(function($query) use ($request) {
-                                    if(isset($request->hobbies)) {
-                                        $hobby_ids = explode(',', $request->hobbies);
-                                        foreach($hobby_ids as $id) {
-                                            $query->orWhereRaw("FIND_IN_SET($id, hobbies)");
+                                ->whereBetween(\DB::raw('CAST(age AS SIGNED)'), [$request->min_age, $request->max_age]);
+                                
+                                if($request->has('hobbies')) {
+                                    $query->where(function($query) use ($request) {
+                                        if(isset($request->hobbies)) {
+                                            $hobby_ids = explode(',', $request->hobbies);
+                                            foreach($hobby_ids as $id) {
+                                                $query->orWhereRaw("FIND_IN_SET($id, hobbies)");
+                                            }
                                         }
-                                    }
-                                    if(isset($request->body_type)) {
-                                        $query->whereIn('body_type', explode(',', $request->body_type));
-                                    }
-                                    if(isset($request->education)) {
-                                        $query->whereIn('education', explode(',', $request->education));
-                                    }
-                                    if(isset($request->religion)) {
-                                        $query->whereIn('religion', explode(',', $request->religion));
-                                    }
-                                })
-                                ->leftJoin('user_likes as ul1', function ($join) {
+                                    });
+                                }
+                                if($request->has('body_type')) {
+                                    $query->whereIn('body_type', explode(',', $request->body_type));
+                                }
+                                if($request->has('education')) {
+                                    $query->whereIn('education', explode(',', $request->education));
+                                }
+                                if($request->has('religion')) {
+                                    $query->whereIn('religion', explode(',', $request->religion));
+                                }
+                                $query->leftJoin('user_likes as ul1', function ($join) {
                                     $join->on('users.id', '=', 'ul1.like_from')
                                          ->where('ul1.like_to', '=', Auth::id());
                                 })
@@ -426,10 +429,11 @@ class CustomerController extends BaseController
                                 })
                                 ->whereNull('ul1.id')
                                 ->whereNull('ul2.id')
-                                ->where('users.updated_at', '>=', now()->subMinutes(5))
-                                ->select('users.id', 'name', 'location', 'age','live_latitude','live_longitude')
-                                ->get()
-                                ->map(function ($user) use ($request, $auth_lat1, $auth_lon1, $earthRadius) {
+                                ->where('users.updated_at', '>=', now()->subMinutes(5));
+
+            $user_list  =   $query->select('users.id', 'name', 'location', 'age','live_latitude','live_longitude')->get();
+            
+            $data['user_list']  =   $user_list->map(function ($user) use ($request, $auth_lat1, $auth_lon1, $earthRadius) {
                                     if(!empty($user->live_latitude) && !empty($user->live_longitude)){
                                         $profile_photo_media = $user->media->firstWhere('type', 'profile_image');
                                         $user->profile_photo = $profile_photo_media->profile_photo ?? null;
