@@ -337,7 +337,7 @@ class CustomerController extends BaseController
             if(!$same_request){
                 // Check logged in user viewd opposite user profile and now liking that user profile then delete
 
-                if($input['status'] == 1){
+                if($input['status'] == 1 || $input['status'] == 0){
                     UserView::where('view_from',Auth::id())->where('view_to',$input['like_to'])->delete();
                 }
                 
