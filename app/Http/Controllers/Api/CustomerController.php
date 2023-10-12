@@ -247,6 +247,7 @@ class CustomerController extends BaseController
             $data['max_age']        = (int)env('MAX_AGE', 30);
             $data['min_distance']   = (int)env('MIN_DISTANCE', 1);
             $data['max_distance']   = (int)env('MAX_DISTANCE', 1);
+            $data['default_distance']= (int)env('DEFAULT_DISTANCE', 1);
 
             return $this->success($data,'Filter data');
         }catch(Exception $e){
