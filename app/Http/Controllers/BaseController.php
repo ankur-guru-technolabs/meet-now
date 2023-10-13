@@ -74,7 +74,7 @@ class BaseController extends Controller
 			$user_photo_data[] = [
 				'user_id' => $userId,
 				'name' => $compress_file_name,
-				'type' => 'Compress_'.$type,
+				'type' => 'compress_'.$type,
 				'created_at' => now(),
 				'updated_at' => now()
 			];

@@ -201,13 +201,16 @@ class CustomerController extends BaseController
                 if (isset($request->is_thumbnail_change) && $request->is_thumbnail_change == 1) {
                     $this->deleteUserPhotos(null, $request->user_id, 'thumbnail_image');
                     if(!empty($thumbnailImage)){
-                        $user_photo_data[] = $this->uploadImageFile($thumbnailImage, $user_data->id, 'thumbnail_image');
+                        // $user_photo_data[] = $this->uploadImageFile($thumbnailImage, $user_data->id, 'thumbnail_image');
+                        $user_photo_data = array_merge($user_photo_data, $this->uploadImageFile($thumbnailImage, $user_data->id, 'thumbnail_image'));
                     } 
                 }
 
                 if (!empty($profileImage)) {
                     $this->deleteUserPhotos(null, $request->user_id, 'profile_image');
-                    $user_photo_data[] = $this->uploadImageFile($profileImage, $user_data->id, 'profile_image');
+                    $this->deleteUserPhotos(null, $request->user_id, 'compress_profile_image');
+                    // $user_photo_data[] = $this->uploadImageFile($profileImage, $user_data->id, 'profile_image');
+                    $user_photo_data = array_merge($user_photo_data,$this->uploadImageFile($profileImage, $user_data->id, 'profile_image'));
                 }
                 UserPhoto::insert($user_photo_data);
 
