@@ -438,6 +438,7 @@ class CustomerController extends BaseController
                                     if(!empty($user->live_latitude) && !empty($user->live_longitude)){
                                         $profile_photo_media = $user->media->firstWhere('type', 'profile_image');
                                         $user->profile_photo = $profile_photo_media->profile_photo ?? null;
+                                        $user->compress_profile_photo = $profile_photo_media->compress_photo ?? null;
                                         unset($user->media);
                                         $lat2 = deg2rad($user->live_latitude);
                                         $lon2 = deg2rad($user->live_longitude);

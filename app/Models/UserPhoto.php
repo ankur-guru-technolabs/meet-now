@@ -15,12 +15,17 @@ class UserPhoto extends Model
         'type',
     ];
 
-    protected $appends = ['profile_photo'];
+    protected $appends = ['profile_photo','compress_photo'];
 
     // ACCESSOR
 
     public function getProfilePhotoAttribute()
     {
         return asset('/user_profile/' . $this->name);
+    }
+ 
+    public function getCompressPhotoAttribute()
+    {
+        return asset('/user_profile/' . 'Compress_'.$this->name);
     }
 }
