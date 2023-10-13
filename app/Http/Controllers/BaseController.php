@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\UserPhoto;
 use Illuminate\Support\Facades\File;
+use Image;
 
 class BaseController extends Controller
 {
@@ -54,14 +55,39 @@ class BaseController extends Controller
     {
         $extension = $file->getClientOriginalExtension();
         $filename = 'User_' . $userId . '_' . random_int(10000, 99999) . '.' . $extension;
-        $file->move(public_path('user_profile'), $filename);
-        return [
-            'user_id' => $userId,
-            'name' => $filename,
-            'type' => $type,
-            'created_at' => now(),
-            'updated_at' => now()
-        ];
+		
+		if($type == 'profile_image'){
+			$compress_file_name = "Compress_".$filename;
+			
+			// THIS WILL STORE COMPRESS FILE
+			$img = Image::make($file->getRealPath());
+			$img->resize(120, 120, function ($constraint) {
+				$constraint->aspectRatio();
+			})->save(public_path('user_profile').'/'.$compress_file_name);
+		}
+
+		// THIS WILL STORE ORIGINIAL FILE
+		$file->move(public_path('user_profile'), $filename);
+
+		$user_photo_data = [];
+		if($type == 'profile_image'){
+			$user_photo_data[] = [
+				'user_id' => $userId,
+				'name' => $compress_file_name,
+				'type' => 'Compress_'.$type,
+				'created_at' => now(),
+				'updated_at' => now()
+			];
+		}
+		
+		$user_photo_data[] = [
+			'user_id' => $userId,
+			'name' => $filename,
+			'type' => $type,
+			'created_at' => now(),
+			'updated_at' => now()
+		];
+		return $user_photo_data;
     }
 
     public function getMediaType($extension)

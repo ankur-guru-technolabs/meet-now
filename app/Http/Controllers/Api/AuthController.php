@@ -312,11 +312,13 @@ class AuthController extends BaseController
                 }
     
                 if (!empty($thumbnailImage)) {
-                    $user_photo_data[] = $this->uploadImageFile($thumbnailImage, $user_data->id, 'thumbnail_image');
+                    // $user_photo_data[] = $this->uploadImageFile($thumbnailImage, $user_data->id, 'thumbnail_image');
+                    $user_photo_data = array_merge($user_photo_data, $this->uploadImageFile($thumbnailImage, $user_data->id, 'thumbnail_image'));
                 }
     
                 if (!empty($profileImage)) {
-                    $user_photo_data[] = $this->uploadImageFile($profileImage, $user_data->id, 'profile_image');
+                    // $user_photo_data[] = $this->uploadImageFile($profileImage, $user_data->id, 'profile_image');
+                    $user_photo_data = array_merge($user_photo_data,$this->uploadImageFile($profileImage, $user_data->id, 'profile_image'));
                 }
                 UserPhoto::insert($user_photo_data);
 
