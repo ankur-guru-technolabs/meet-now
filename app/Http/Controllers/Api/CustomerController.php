@@ -41,9 +41,10 @@ class CustomerController extends BaseController
             $data['user']   =  User::with('media','activeSubscription')->find($id);
 
             $data['user']->media->map(function ($photo) {
-                $photo->append('profile_photo', 'compress_photo');
+                $photo->append('profile_photo');
             });
-
+            $profile_photo_media = $user->media->firstWhere('type', 'profile_image');
+            $user->compress_profile_photo   = $profile_photo_media->compress_photo ?? null;
             $hobbies_id                     = $data['user']['hobbies'];
             $hobbies_array                  = explode(",", $hobbies_id); 
             $data['user']['hobbies_new']    = array_map('intval', $hobbies_array);
