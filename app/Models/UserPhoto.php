@@ -26,6 +26,10 @@ class UserPhoto extends Model
  
     public function getCompressPhotoAttribute()
     {
-        return asset('/user_profile/' . 'Compress_'.$this->name);
+        $path = asset('/user_profile/' . 'Compress_'.$this->name);
+        if (File::exists($path)) {
+          return $path;
+        }
+        return null;
     }
 }
