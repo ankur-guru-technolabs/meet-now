@@ -41,7 +41,7 @@ class CustomerController extends BaseController
             $data['user']   =  User::with('media','activeSubscription')->find($id);
 
             $data['user']->media->map(function ($photo) {
-                $photo->append('profile_photo');
+                $photo->append('profile_photo', 'compress_photo');
             });
 
             $hobbies_id                     = $data['user']['hobbies'];
@@ -541,6 +541,7 @@ class CustomerController extends BaseController
                                         if(!empty($user->latitude) && !empty($user->longitude)){
                                             $profile_photo_media = $user->media->firstWhere('type', 'profile_image');
                                             $user->profile_photo = $profile_photo_media->profile_photo ?? null;
+                                            $user->compress_profile_photo = $profile_photo_media->compress_photo ?? null;
                                             unset($user->media);
                                             $lat2 = deg2rad($user->latitude);
                                             $lon2 = deg2rad($user->longitude);
