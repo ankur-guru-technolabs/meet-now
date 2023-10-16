@@ -44,7 +44,7 @@ class CustomerController extends BaseController
                 $photo->append('profile_photo');
             });
             $profile_photo_media = $user->media->firstWhere('type', 'profile_image');
-            $user->compress_profile_photo   = $profile_photo_media->compress_photo ?? null;
+            $data['user']->compress_profile_photo   = $profile_photo_media->compress_photo ?? null;
             $hobbies_id                     = $data['user']['hobbies'];
             $hobbies_array                  = explode(",", $hobbies_id); 
             $data['user']['hobbies_new']    = array_map('intval', $hobbies_array);
