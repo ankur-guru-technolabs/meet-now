@@ -483,20 +483,16 @@ class CustomerController extends BaseController
                 // 'hobbies' => 'required',
                 'min_age'     => 'required',
                 'max_age'     => 'required|gte:min_age',
-                'min_distance'=> 'required',
-                'max_distance'=> 'required|gte:min_distance',
-                'latitude'    => 'required',
-                'longitude'   => 'required',
-                'distance_in' => 'required',
+                'location'    => 'required',
             ]);
 
             if ($validateData->fails()) {
                 return $this->error($validateData->errors(),'Validation error',403);
             }
-            $auth_lat1 = deg2rad($request->latitude);
-            $auth_lon1 = deg2rad($request->longitude);
+            // $auth_lat1 = deg2rad($request->latitude);
+            // $auth_lon1 = deg2rad($request->longitude);
 
-            $earthRadius = 3959; 
+            // $earthRadius = 3959; 
 
             $query  = User::where('users.id', '!=', Auth::id())
                                 ->where('user_type', 'user')
@@ -505,6 +501,11 @@ class CustomerController extends BaseController
                                 ->where('gender', $request->interested_gender)
                                 ->where('interested_gender', Auth::user()->gender)
                                 ->whereBetween(\DB::raw('CAST(age AS SIGNED)'), [$request->min_age, $request->max_age]);
+
+                                if($request->has('location')){                                        
+                                    $query->where('location', $request->location);
+                                } 
+                                
                                 if($request->has('hobbies')) {
                                     $query->where(function($query) use ($request) {
                                         if(isset($request->hobbies)) {
@@ -539,29 +540,30 @@ class CustomerController extends BaseController
             $user_list  =   $query->select('users.id', 'name', 'location', 'age','latitude','longitude')->paginate($request->input('perPage'), ['*'], 'page', $request->input('page'));
 
             $data['user_list']  =   $user_list->map(function ($user) use ($request, $auth_lat1, $auth_lon1, $earthRadius) {
-                                        if(!empty($user->latitude) && !empty($user->longitude)){
+                                        // if(!empty($user->latitude) && !empty($user->longitude)){
                                             $profile_photo_media = $user->media->firstWhere('type', 'profile_image');
                                             $user->profile_photo = $profile_photo_media->profile_photo ?? null;
                                             $user->compress_profile_photo = $profile_photo_media->compress_photo ?? null;
                                             unset($user->media);
-                                            $lat2 = deg2rad($user->latitude);
-                                            $lon2 = deg2rad($user->longitude);
-                                            $dLat = $lat2 - $auth_lat1;
-                                            $dLon = $lon2 - $auth_lon1;
-                                            $a = sin($dLat/2) * sin($dLat/2) + cos($auth_lat1) * cos($lat2) * sin($dLon/2) * sin($dLon/2);
-                                            $c = $earthRadius * 2 * atan2(sqrt($a), sqrt(1 - $a));
-                                            if($request->distance_in == 0){
-                                                $distance = round($c * 1760,2);  
-                                            }
-                                            if($request->distance_in == 1){
-                                                $distance = round($c,2);  
-                                            }
-                                            $user->distance = $distance;
-                                            $user->distance_in = $request->distance_in;
-                                            if($distance >= $request->min_distance && $distance <= $request->max_distance ){
-                                                return $user;
-                                            }
-                                        }
+                                            return $user;
+                                            // $lat2 = deg2rad($user->latitude);
+                                            // $lon2 = deg2rad($user->longitude);
+                                            // $dLat = $lat2 - $auth_lat1;
+                                            // $dLon = $lon2 - $auth_lon1;
+                                            // $a = sin($dLat/2) * sin($dLat/2) + cos($auth_lat1) * cos($lat2) * sin($dLon/2) * sin($dLon/2);
+                                            // $c = $earthRadius * 2 * atan2(sqrt($a), sqrt(1 - $a));
+                                            // if($request->distance_in == 0){
+                                            //     $distance = round($c * 1760,2);  
+                                            // }
+                                            // if($request->distance_in == 1){
+                                            //     $distance = round($c,2);  
+                                            // }
+                                            // $user->distance = $distance;
+                                            // $user->distance_in = $request->distance_in;
+                                            // if($distance >= $request->min_distance && $distance <= $request->max_distance ){
+                                            //     return $user;
+                                            // }
+                                        // }
                                     })->filter();
 
             $data['current_page'] = $user_list->currentPage();
