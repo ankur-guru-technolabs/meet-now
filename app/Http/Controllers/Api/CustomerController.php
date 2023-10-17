@@ -539,7 +539,8 @@ class CustomerController extends BaseController
 
             $user_list  =   $query->select('users.id', 'name', 'location', 'age','latitude','longitude')->paginate($request->input('perPage'), ['*'], 'page', $request->input('page'));
 
-            $data['user_list']  =   $user_list->map(function ($user) use ($request, $auth_lat1, $auth_lon1, $earthRadius) {
+            $data['user_list']  =   $user_list->map(function ($user) use ($request) {
+            // $data['user_list']  =   $user_list->map(function ($user) use ($request, $auth_lat1, $auth_lon1, $earthRadius) {
                                         // if(!empty($user->latitude) && !empty($user->longitude)){
                                             $profile_photo_media = $user->media->firstWhere('type', 'profile_image');
                                             $user->profile_photo = $profile_photo_media->profile_photo ?? null;
