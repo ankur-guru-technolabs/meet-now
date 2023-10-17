@@ -562,7 +562,7 @@ class CustomerController extends BaseController
                                                 return $user;
                                             }
                                         }
-                                    });
+                                    })->filter();
 
             $data['current_page'] = $user_list->currentPage();
             $data['per_page']     = $user_list->perPage();
