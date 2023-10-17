@@ -534,7 +534,7 @@ class CustomerController extends BaseController
                                          ->where('ul2.like_from', '=', Auth::id());
                                 })
                                 ->whereNull('ul1.id')
-                                ->whereNull('ul2.id')
+                                ->whereNull('ul2.id');
                                 // ->where('users.updated_at', '>=', now()->subMinutes(5));
 
             $user_list  =   $query->select('users.id', 'name', 'location', 'age','latitude','longitude')->paginate($request->input('perPage'), ['*'], 'page', $request->input('page'));
