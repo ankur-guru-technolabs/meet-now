@@ -1113,7 +1113,7 @@ class CustomerController extends BaseController
 
     public function notificationList(Request $request){
         try{
-            $notification_id  = Notification::where('receiver_id',Auth::id())->whereNoy('type','!=','message')->orderBy('id','desc')->take(30)->pluck('id')->toArray();
+            $notification_id  = Notification::where('receiver_id',Auth::id())->where('type','!=','message')->orderBy('id','desc')->take(30)->pluck('id')->toArray();
             Notification::whereNotIn('id', $notification_id)->where('receiver_id',Auth::id())->delete();
             
             $notification_data  = Notification::where('receiver_id',Auth::id())->orderBy('id','desc')->take(30)->get();
