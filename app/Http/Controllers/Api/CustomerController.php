@@ -1227,8 +1227,8 @@ class CustomerController extends BaseController
                 $user_subscription->price           =  $plan_data->price; 
                 $user_subscription->currency_code   =  $plan_data->currency_code; 
                 $user_subscription->month           =  $plan_data->month; 
-                $user_subscription->plan_duration   = $plan_data->plan_duration; 
-                $user_subscription->plan_type       = $plan_data->plan_type; 
+                $user_subscription->plan_duration   =  $plan_data->plan_duration; 
+                $user_subscription->plan_type       =  $request->plan_type ?? $plan_data->plan_type; 
                 $user_subscription->save(); 
 
                 // Notification for subscription purchase
@@ -1261,6 +1261,7 @@ class CustomerController extends BaseController
             $today_like_count       = UserLikes::where('like_from',Auth::user()->id)->whereDate('created_at', date('Y-m-d'))->count();
             $data['remaining_likes'] = (int)$data['like_per_day'] - $today_like_count;
             
+            $data['is_trial_used'] = UserSubscription::where('user_id',$user_id)->where('plan_type','trial')->count() > 0 ? true : false;
             return $this->success($data,'Active subscription successfully');
         }catch(Exception $e){
             return $this->error($e->getMessage(),'Exception occur');

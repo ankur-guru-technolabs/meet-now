@@ -7,6 +7,7 @@ use App\Mail\EmailVerificationMail;
 use App\Mail\SubscriptionExpireMail;
 use App\Models\Notification;
 use App\Models\User;
+use Twilio\Rest\Client;
 
 class Helper
 {
@@ -37,6 +38,19 @@ class Helper
             Mail::to($data['email'])->send(new SubscriptionExpireMail($data));
         }
 
+        return true;
+    }
+  
+    public static function sendOtp($number,$otp)
+    {
+        if ($number == '') {
+            return false;
+        }
+        $account_sid = env('TWILIO_SID', 'ACadfb118f338e01fbf732eaeb557d48d4');
+        $auth_token = env('TWILIO_AUTH_TOKEN', 'fb20b3c3bca68f70f916e6eab7038db0');
+        $twilio_number = env('TWILIO_NUMBER', '+18557854022');
+        $client = new Client($account_sid, $auth_token);
+        $client->messages->create($number,['from' => $twilio_number, 'body' => $otp] );
         return true;
     }
 

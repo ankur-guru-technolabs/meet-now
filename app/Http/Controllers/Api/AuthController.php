@@ -78,6 +78,7 @@ class AuthController extends BaseController
                     };
                     $data['is_user_exist'] = 1;
                 }
+                Helper::sendOtp($key,$otp);
                 $data['send_in'] = 'phone_no';
             } else {
                 return $this->error('Please enter email or phone number','Required parameter');
