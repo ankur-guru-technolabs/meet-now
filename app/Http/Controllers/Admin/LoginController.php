@@ -46,7 +46,7 @@ class LoginController extends Controller
     
     public function subscriptionExpire(Request $request){
         $three_day_after_date = date ('Y-m-d', strtotime ('+3 day'));
-        $user_subscripion = UserSubscription::with('user:id,name,email')->whereDate('expire_date',$three_day_after_date)->select('id','user_id')->get();
+        $user_subscripion = UserSubscription::with('user:id,name,email')->whereDate('expire_date',$three_day_after_date)->select('id','user_id','title')->get();
 
         foreach($user_subscripion as $users){
             $key          = $users->user->email;
@@ -58,6 +58,11 @@ class LoginController extends Controller
                 'subject'             => 'Meet now subscription expire',
             ];
             Helper::sendMail('emails.subscription_expire', $email_data, $key, '');
+
+            $title = $users->title." will expire in 3 days";
+            $message = $users->title." will expire in 3 days"; 
+
+            Helper::send_notification('single', 0, $users->user_id, $title, 'subscription_expire', $message, []);
         }
     }
    
