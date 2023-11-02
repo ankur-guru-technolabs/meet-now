@@ -29,7 +29,7 @@ class AuthController extends BaseController
             $otp    = substr(number_format(time() * rand(),0,'',''),0,4);
             $data   = [];
             $data['is_user_exist'] = 0;
-            $data['otp'] = (int)$otp;
+            // $data['otp'] = (int)$otp;
 
             if(isset($request->email)){
                 $validateData = Validator::make($request->all(), [
