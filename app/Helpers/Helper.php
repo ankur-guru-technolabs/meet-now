@@ -47,7 +47,7 @@ class Helper
             return false;
         }
         $account_sid = env('TWILIO_SID', 'ACadfb118f338e01fbf732eaeb557d48d4');
-        $auth_token = env('TWILIO_AUTH_TOKEN', 'f41a25713471db832a995ec157c21072');
+        $auth_token = env('TWILIO_AUTH_TOKEN', '51361ee3094a75cd2bb6d43b71530e6a');
         $twilio_number = env('TWILIO_NUMBER', '+18557854022');
         $message = "Your meet now otp is ". $otp;
         $client = new Client($account_sid, $auth_token);
