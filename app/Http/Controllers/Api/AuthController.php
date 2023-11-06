@@ -250,8 +250,8 @@ class AuthController extends BaseController
         try{
             $validateData = Validator::make($request->all(), [
                 'name'       => 'required|string|max:255',
-                'email'      => 'required|email|unique:users,email|max:255',
-                'phone_no'   => 'required|string|unique:users,phone_no|max:20',
+                'email'      => 'nullable|email|unique:users,email|max:255',
+                'phone_no'   => 'nullable|string|unique:users,phone_no|max:20',
                 'location'   => 'required|string|max:255',
                 'latitude'   => 'required|numeric',
                 'longitude'  => 'required|numeric',
@@ -284,7 +284,9 @@ class AuthController extends BaseController
                 return $this->error($validateData->errors(),'Validation error',403);
             }   
 
-            $this->sendOtp($request);
+            if(!isset($request->google_id) && !isset($request->facebook_id)){
+                $this->sendOtp($request);
+            }
             
             $birthdayDate = new DateTime($request->birth_date);
             $currentDate = new DateTime(); 
@@ -323,11 +325,12 @@ class AuthController extends BaseController
                 }
                 UserPhoto::insert($user_photo_data);
 
-                $temp = Temp::where('key', $request->email)->value('value');
-                if ($temp !== null) {
-                    $user_data['otp'] = (int) $temp;
+                if(!isset($request->google_id) && !isset($request->facebook_id)){
+                    $temp = Temp::where('key', $request->email)->value('value');
+                    if ($temp !== null) {
+                        $user_data['otp'] = (int) $temp;
+                    }
                 }
-
                 return $this->success($user_data,'You are successfully registered');
             }
             return $this->error('Something went wrong','Something went wrong');
