@@ -294,6 +294,9 @@ class AuthController extends BaseController
             $input                   = $request->all();
             $input['user_type']      = 'user';
             $input['phone_verified'] = 1;
+            if(isset($request->google_id) || isset($request->facebook_id)){
+                $input['email_verified'] = 1;
+            }
             $input['age']            = $birthdayDate->diff($currentDate)->y;
             $user_data  = User::create($input);
 
@@ -330,6 +333,13 @@ class AuthController extends BaseController
                     if ($temp !== null) {
                         $user_data['otp'] = (int) $temp;
                     }
+                }
+
+                if(isset($request->google_id) || isset($request->facebook_id)){
+                    $title = "Welcome to Meet Now";
+                    $message = "Welcome to Meet Now"; 
+                    Helper::send_notification('single', 0, $user_data->id, $title, 'welcome', $message, []);
+                    $user_data['token'] = $user_data->createToken('Auth token')->accessToken;
                 }
                 return $this->success($user_data,'You are successfully registered');
             }
