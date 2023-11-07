@@ -38,7 +38,10 @@ class CustomerController extends BaseController
     public function getProfile(Request $request){
         try{ 
             $id = isset($request->id) ? $request->id : Auth::id();
-            $data['user']   =  User::with('media','activeSubscription')->find($id);
+            $data['user']   =  User::select('*')->except(['facebook_id', 'google_id'])->with('media','activeSubscription')->find($id);
+            if( !isset($request->id)){
+                $data['user']   =  User::with('media','activeSubscription')->find($id);
+            } 
 
             $data['user']->media->map(function ($photo) {
                 $photo->append('profile_photo');

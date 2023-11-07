@@ -205,6 +205,7 @@ class AuthController extends BaseController
         try{
             $validateData = Validator::make($request->all(), [
                 'social_id' => 'required',
+                'fcm_token' => 'required',
             ]);
 
             if ($validateData->fails()) {
@@ -214,6 +215,8 @@ class AuthController extends BaseController
             $findUser = User::where('google_id', $request->social_id)->orWhere('facebook_id',$request->social_id)->first();
             if($findUser){
                 $findUser->tokens()->delete();
+                $findUser->fcm_token = $request->fcm_token;
+                $findUser->save();
                 $data['token'] = $findUser->createToken('Auth token')->accessToken;
                 return $this->success($data,'Login successfully');
             }else{

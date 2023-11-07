@@ -46,6 +46,8 @@ class User extends Authenticatable
         'is_hide_profile',
         'is_notification_mute',
         'fcm_token',
+        'google_id',
+        'facebook_id',
         'password',
     ];
 
