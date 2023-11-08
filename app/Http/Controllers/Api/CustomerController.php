@@ -39,9 +39,8 @@ class CustomerController extends BaseController
         try{ 
             $id = isset($request->id) ? $request->id : Auth::id(); 
             $data['user']   =  User::with('media','activeSubscription')->find($id);
-            $data['user']->makeHidden(['google_id','facebook_id']);
-            if( !isset($request->id)){
-                $data['user']   =  User::with('media','activeSubscription')->find($id);
+            if(isset($request->id)){
+                $data['user']->makeHidden(['google_id','facebook_id']);
             } 
 
             $data['user']->media->map(function ($photo) {
@@ -220,7 +219,7 @@ class CustomerController extends BaseController
                 UserPhoto::insert($user_photo_data);
 
                 $user_data->new_email = null;
-                if(!empty(($user_data->email)) && $user_data->email != $request->email){
+                if(!empty(($user_data->email)) && ($user_data->email != $request->email)){
                     $user_data->new_email = $request->email;
                     if($otp > 0){
                         $user_data->otp = $otp;
