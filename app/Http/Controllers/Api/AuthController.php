@@ -217,6 +217,10 @@ class AuthController extends BaseController
                 return $this->error($validateData->errors(),'Validation error',403);
             } 
 
+            if($request->email && User::where('email', '=', $request->email)->count() > 0){
+                return $this->error('Email already exist','Email already exist');
+            }
+            
             $findUser = User::where('google_id', $request->social_id)->orWhere('facebook_id',$request->social_id)->first();
             if($findUser){
                 $findUser->tokens()->delete();
