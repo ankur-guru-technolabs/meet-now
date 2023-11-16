@@ -216,10 +216,6 @@ class AuthController extends BaseController
             if ($validateData->fails()) {
                 return $this->error($validateData->errors(),'Validation error',403);
             } 
-
-            if($request->email && User::where('email', '=', $request->email)->count() > 0){
-                return $this->error('Email already exist','Email already exist');
-            }
             
             $findUser = User::where('google_id', $request->social_id)->orWhere('facebook_id',$request->social_id)->first();
             if($findUser){
@@ -229,6 +225,9 @@ class AuthController extends BaseController
                 $data['token'] = $findUser->createToken('Auth token')->accessToken;
                 return $this->success($data,'Login successfully');
             }else{
+                if($request->email && User::where('email', '=', $request->email)->count() > 0){
+                    return $this->error('Email already exist','Email already exist');
+                }
                 $data['social_id']   = $request->social_id;
                 return $this->success($data,'Signup successfully');
             }
