@@ -223,6 +223,7 @@ class AuthController extends BaseController
                 $findUser->fcm_token = $request->fcm_token;
                 $findUser->save();
                 $data['token'] = $findUser->createToken('Auth token')->accessToken;
+                $data['user_id'] = $findUser->id;
                 return $this->success($data,'Login successfully');
             }else{
                 if($request->email && User::where('email', '=', $request->email)->count() > 0){
