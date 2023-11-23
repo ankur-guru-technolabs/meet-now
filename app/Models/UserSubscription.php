@@ -19,6 +19,8 @@ class UserSubscription extends Model
         'month',
         'plan_duration',
         'plan_type',
+        'google_plan_id',
+        'apple_plan_id'
     ];
 
     public function user()

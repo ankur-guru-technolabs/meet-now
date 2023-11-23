@@ -5,7 +5,10 @@
     .dropdown:not(.dropdown-hover) .dropdown-menu.show {
   margin-top: 0 !important;
 }
-
+.onlyread
+{
+    cursor: not-allowed !important;
+}
 </style>
 <div class="container-fluid py-4">
     <div class="row">
@@ -21,11 +24,12 @@
                         <form method="post" action="{{route('subscription.subscription-update')}}" enctype="multipart/form-data">
                             @csrf
                             <input type="hidden" class="form-control" value="{{$subscription->id ?? ''}}" name="id">
+                            <input type="text" class="form-control" value="{{$subscription->plan_type ?? ''}}" name="plan_type">
                             <div class="row">
                                 <div class="col-6 pt-3">
                                     <div class="input-group input-group-dynamic mb-2 focused is-focused">
-                                        <label class="form-label">Title</label>
-                                        <input type="text" class="form-control" value="{{$subscription->title ?? ''}}" name="title" autocomplete="off">
+                                        <label class="form-label">Title</label> 
+                                        <input type="text" class="form-control onlyread" value="{{$subscription->title ?? ''}}" name="title" autocomplete="off" readonly="readonly" data-bs-toggle="tooltip" data-bs-placement="top" title="Not editable" data-container="body" data-animation="true">
                                     </div>
                                     @if($errors->has('title'))
                                         <small class="text-danger" >
@@ -36,11 +40,83 @@
                                 <div class="col-6 pt-3">
                                     <div class="input-group input-group-dynamic mb-2 focused is-focused">
                                         <label class="form-label">Description</label>
-                                        <input type="text" class="form-control" value="{{$subscription->description ?? ''}}" name="description" autocomplete="off">
+                                        <input type="text" class="form-control onlyread" value="{{$subscription->description ?? ''}}" name="description" autocomplete="off" readonly="readonly" data-bs-toggle="tooltip" data-bs-placement="top" title="Not editable" data-container="body" data-animation="true">
                                     </div>
                                     @if($errors->has('description'))
                                         <small class="text-danger" >
                                             {{ $errors->first('description') }}
+                                        </small>
+                                    @endif
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-6 pt-3">
+                                    <div class="input-group input-group-dynamic mb-2 focused is-focused">
+                                        <label class="form-label">Price</label>
+                                        <input type="number" class="form-control onlyread" value="{{$subscription->price ?? ''}}" name="price" autocomplete="off"  step="any" readonly="readonly" data-bs-toggle="tooltip" data-bs-placement="top" title="Not editable" data-container="body" data-animation="true">
+                                    </div>
+                                    @if($errors->has('price'))
+                                        <small class="text-danger" >
+                                            {{ $errors->first('price') }}
+                                        </small>
+                                    @endif
+                                </div>
+                                <div class="col-6 pt-3">
+                                    <div class="input-group input-group-dynamic mb-2 focused is-focused">
+                                        <label class="form-label">Currency Code</label>
+                                        <input type="text" class="form-control onlyread" value="{{$subscription->currency_code ?? ''}}" name="currency_code" autocomplete="off" readonly="readonly" data-bs-toggle="tooltip" data-bs-placement="top" title="Not editable" data-container="body" data-animation="true">
+                                    </div>
+                                    @if($errors->has('currency_code'))
+                                        <small class="text-danger" >
+                                            {{ $errors->first('currency_code') }}
+                                        </small>
+                                    @endif
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-6 pt-3">
+                                    <div class="input-group input-group-dynamic mb-2 focused is-focused">
+                                        <label class="form-label">Month</label>
+                                        <input type="number" class="form-control onlyread" value="{{$subscription->month ?? ''}}" name="month" autocomplete="off" readonly="readonly" data-bs-toggle="tooltip" data-bs-placement="top" title="Not editable" data-container="body" data-animation="true">
+                                    </div>
+                                    @if($errors->has('month'))
+                                        <small class="text-danger" >
+                                            {{ $errors->first('month') }}
+                                        </small>
+                                    @endif
+                                </div>
+                                <div class="col-6 pt-3">
+                                    <div class="input-group input-group-dynamic mb-2 focused is-focused">
+                                        <label class="form-label">Plan Duration (in days)</label>
+                                        <input type="number" class="form-control onlyread" value="{{$subscription->plan_duration ?? ''}}" name="plan_duration" autocomplete="off" readonly="readonly" data-bs-toggle="tooltip" data-bs-placement="top" title="Not editable" data-container="body" data-animation="true">
+                                    </div>
+                                    @if($errors->has('plan_duration'))
+                                        <small class="text-danger" >
+                                            {{ $errors->first('plan_duration') }}
+                                        </small>
+                                    @endif
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-6 pt-3">
+                                    <div class="input-group input-group-dynamic mb-2 focused is-focused">
+                                        <label class="form-label">Google plan id </label>
+                                        <input type="text" class="form-control onlyread" value="{{$subscription->google_plan_id ?? ''}}" name="google_plan_id" autocomplete="off" readonly="readonly" data-bs-toggle="tooltip" data-bs-placement="top" title="Not editable" data-container="body" data-animation="true">
+                                    </div>
+                                    @if($errors->has('google_plan_id'))
+                                        <small class="text-danger" >
+                                            {{ $errors->first('google_plan_id') }}
+                                        </small>
+                                    @endif
+                                </div>
+                                <div class="col-6 pt-3">
+                                    <div class="input-group input-group-dynamic mb-2 focused is-focused">
+                                        <label class="form-label">Apple plan id </label>
+                                        <input type="text" class="form-control onlyread" value="{{$subscription->apple_plan_id ?? ''}}" name="apple_plan_id" autocomplete="off" readonly="readonly" data-bs-toggle="tooltip" data-bs-placement="top" title="Not editable" data-container="body" data-animation="true">
+                                    </div>
+                                    @if($errors->has('apple_plan_id'))
+                                        <small class="text-danger" >
+                                            {{ $errors->first('apple_plan_id') }}
                                         </small>
                                     @endif
                                 </div>
@@ -133,56 +209,7 @@
                                         </small>
                                     @endif
                                 </div>
-                            </div>
-                            <div class="row">
-                                <div class="col-6 pt-3">
-                                    <div class="input-group input-group-dynamic mb-2 focused is-focused">
-                                        <label class="form-label">Price</label>
-                                        <input type="number" class="form-control" value="{{$subscription->price ?? ''}}" name="price" autocomplete="off"  step="any">
-                                    </div>
-                                    @if($errors->has('price'))
-                                        <small class="text-danger" >
-                                            {{ $errors->first('price') }}
-                                        </small>
-                                    @endif
-                                </div>
-                                <div class="col-6 pt-3">
-                                    <div class="input-group input-group-dynamic mb-2 focused is-focused">
-                                        <label class="form-label">Currency Code</label>
-                                        <input type="text" class="form-control" value="{{$subscription->currency_code ?? ''}}" name="currency_code" autocomplete="off">
-                                    </div>
-                                    @if($errors->has('currency_code'))
-                                        <small class="text-danger" >
-                                            {{ $errors->first('currency_code') }}
-                                        </small>
-                                    @endif
-                                </div>
-                            </div>
-                            <div class="row">
-                                <div class="col-6 pt-3">
-                                    <div class="input-group input-group-dynamic mb-2 focused is-focused">
-                                        <label class="form-label">Month</label>
-                                        <input type="number" class="form-control" value="{{$subscription->month ?? ''}}" name="month" autocomplete="off">
-                                    </div>
-                                    @if($errors->has('month'))
-                                        <small class="text-danger" >
-                                            {{ $errors->first('month') }}
-                                        </small>
-                                    @endif
-                                </div>
-                                <div class="col-6 pt-3">
-                                    <div class="input-group input-group-dynamic mb-2 focused is-focused">
-                                        <label class="form-label">Plan Duration (in days)</label>
-                                        <input type="number" class="form-control" value="{{$subscription->plan_duration ?? ''}}" name="plan_duration" autocomplete="off">
-                                    </div>
-                                    @if($errors->has('plan_duration'))
-                                        <small class="text-danger" >
-                                            {{ $errors->first('plan_duration') }}
-                                        </small>
-                                    @endif
-                                </div>
-                            </div>
-                           
+                            </div> 
                             <div class="row pt-4">
                                 <div class="col s12 m12 input-field">
                                     <button type="submit" class="btn bg-gradient-primary">Update</button>

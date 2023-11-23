@@ -280,7 +280,6 @@ class AdminController extends BaseController
     }
     
     public function subscriptionUpdate(Request $request){
-        
         $validator = Validator::make($request->all(),[
             'id'=>"required",
             'title'=>"required",
@@ -295,6 +294,8 @@ class AdminController extends BaseController
             'currency_code'=>"required",
             'month'=>"required",
             'plan_duration'=>"required",
+            'google_plan_id' => $request->plan_type === 'free' ? 'nullable' : 'required',
+            'apple_plan_id' => $request->plan_type === 'free' ? 'nullable' : 'required',
         ]);
 
         if ($validator->fails())
@@ -315,6 +316,8 @@ class AdminController extends BaseController
         $insert_data['currency_code']     = $input['currency_code'];
         $insert_data['month']             = $input['month'];
         $insert_data['plan_duration']     = $input['plan_duration'];
+        $insert_data['google_plan_id']    = $input['google_plan_id'];
+        $insert_data['apple_plan_id']     = $input['apple_plan_id'];
         
         Subscription::where('id',$request->id)->update($insert_data);
         return redirect()->route('subscription.list')->with('message','Subscription updated Successfully'); 

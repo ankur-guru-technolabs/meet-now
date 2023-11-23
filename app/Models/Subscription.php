@@ -23,6 +23,8 @@ class Subscription extends Model
         'month',
         'plan_duration',
         'plan_type',
+        'google_plan_id',
+        'apple_plan_id'
     ];
 
     protected $casts = [

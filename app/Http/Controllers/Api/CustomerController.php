@@ -1232,6 +1232,8 @@ class CustomerController extends BaseController
                 $user_subscription->month           =  $plan_data->month; 
                 $user_subscription->plan_duration   =  $plan_data->plan_duration; 
                 $user_subscription->plan_type       =  $request->plan_type ?? $plan_data->plan_type; 
+                $user_subscription->google_plan_id  =  $plan_data->google_plan_id; 
+                $user_subscription->apple_plan_id   =  $plan_data->apple_plan_id; 
                 $user_subscription->save(); 
 
                 // Notification for subscription purchase
