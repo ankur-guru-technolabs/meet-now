@@ -25,6 +25,7 @@ use App\Models\UserSubscription;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Lib\RtcTokenBuilder;
+use App\Services\GooglePlayService;
 use DateTime;
 use Exception;
 use Helper; 
@@ -1213,13 +1214,14 @@ class CustomerController extends BaseController
         return $this->error('Something went wrong','Something went wrong');
     }
    
-    // PURCHASE SUVSCRIPTION
+    // PURCHASE SUBSCRIPTION
     
-    public function purchaseSubscription(Request $request){
+    public function purchaseFreeSubscription(Request $request){
         try{
             $user_id = Auth::id();
             $today_date = date('Y-m-d H:i:s');
-            $is_purchased = UserSubscription::where('user_id',$user_id)->where('expire_date','>',$today_date)->first();
+            // $is_purchased = UserSubscription::where('user_id',$user_id)->where('expire_date','>',$today_date)->first();
+            $is_purchased = UserSubscription::where('user_id',$user_id)->where('plan_type','free')->first();
             if($is_purchased === null){
                 $plan_data = Subscription::where('id',$request->subscription_id)->first();
                 $user_subscription                  = new UserSubscription();
@@ -1245,6 +1247,133 @@ class CustomerController extends BaseController
                 return $this->success([],'Subscription purchased successfully');
             }
             return $this->error('You have already purchased plan','You have already purchased plan');
+        }catch(Exception $e){
+            return $this->error($e->getMessage(),'Exception occur');
+        }
+        return $this->error('Something went wrong','Something went wrong');
+    }
+
+    // PURCHASE FROM GOOGLE SUBSCRIPTION
+    
+    public function purchaseFromGoogle(Request $request){
+        try{
+
+            $validateData = Validator::make($request->all(), [
+                'product_id' => 'required',
+                'purchase_token' => 'required',
+            ]);
+
+            if ($validateData->fails()) {
+                return $this->error($validateData->errors(),'Validation error',403);
+            }
+
+            $productId = $request->product_id;            
+            $purchaseToken = $request->purchase_token;            
+            $googlePlayService = new GooglePlayService();
+
+            $user_id = Auth::id();
+            $today_date = date('Y-m-d H:i:s');
+
+            if(UserSubscription::where('user_id',$user_id)->where('expire_date','>',$today_date)->count() > 0){
+                return $this->error('You have already purchased plan','You have already purchased plan');
+            }
+
+            try{
+                $result = $googlePlayService->verifyPurchase($productId, $purchaseToken); 
+            }catch(\Exception $e){
+                return $this->error('Unable to proceed payment','Unable to proceed payment');
+            } 
+
+            if($result->orderId){ 
+                $time = $result->expiryTimeMillis/1000;
+                $exp = new DateTime("@$time"); 
+
+                $plan_data = Subscription::where('google_plan_id',$request->product_id)->first();
+                $user_subscription                  = new UserSubscription();
+                $user_subscription->user_id         =  $user_id; 
+                $user_subscription->subscription_id =  $plan_data->id; 
+                $user_subscription->expire_date     =  $exp->setTimezone(new \DateTimeZone('UTC'))->format('Y-m-d H:i:s') ?? Date('Y-m-d H:i:s', strtotime('+'.$plan_data->plan_duration. 'days')); 
+                $user_subscription->title           =  $plan_data->title; 
+                $user_subscription->price           =  $plan_data->price; 
+                $user_subscription->currency_code   =  $plan_data->currency_code; 
+                $user_subscription->month           =  $plan_data->month; 
+                $user_subscription->plan_duration   =  $plan_data->plan_duration; 
+                $user_subscription->plan_type       =  $request->plan_type ?? $plan_data->plan_type; 
+                $user_subscription->google_plan_id  =  $plan_data->google_plan_id; 
+                $user_subscription->order_id        =  $result->orderId; 
+                $user_subscription->save(); 
+    
+                // Notification for subscription purchase
+    
+                $title = $plan_data->title." purchased successfully";
+                $message = $plan_data->title." purchased successfully"; 
+                Helper::send_notification('single', 0, Auth::id(), $title, 'subscription_purchase', $message, []);
+                return $this->success([],'Subscription purchased successfully');
+            }
+            return $this->error('Something went wrong','Something went wrong');
+        }catch(Exception $e){
+            return $this->error($e->getMessage(),'Exception occur');
+        }
+        return $this->error('Something went wrong','Something went wrong');
+    }
+
+    // PURCHASE FROM APPLE 
+
+    public function purchaseFromApple(Request $request){
+        try{
+
+            $validateData = Validator::make($request->all(), [
+                'product_id' => 'required',
+                'receipt_data' => 'required',
+            ]);
+
+            if ($validateData->fails()) {
+                return $this->error($validateData->errors(),'Validation error',403);
+            }
+
+            $user_id = Auth::id();
+            $today_date = date('Y-m-d H:i:s');
+            if(UserSubscription::where('user_id',$user_id)->where('expire_date','>',$today_date)->count() > 0){
+                return $this->error('You have already purchased plan','You have already purchased plan');
+            }
+            try{
+                $response = \Http::post('https://sandbox.itunes.apple.com/verifyReceipt', [
+                    'receipt-data' => $request->receipt_data,
+                    'password' => env('APPLE_PLAY_SECRET', '9dbbffaee18f48b19811218ef8525ce2'),
+                    'exclude-old-transactions' => true,
+                ]);
+                $verificationResult = $response->json();
+            }catch(\Exception $e){
+                return $this->error('Unable to proceed payment','Unable to proceed payment');
+            } 
+
+            if(isset($verificationResult['latest_receipt_info'])){
+                $time = $verificationResult['latest_receipt_info'][0]['expires_date_ms']/1000;
+                $exp = new DateTime("@$time"); 
+                $plan_data = Subscription::where('apple_plan_id',$request->product_id)->first();
+                $user_subscription                  = new UserSubscription();
+                $user_subscription->user_id         =  $user_id; 
+                $user_subscription->subscription_id =  $plan_data->id; 
+                $user_subscription->expire_date     =  $exp->setTimezone(new \DateTimeZone('UTC'))->format('Y-m-d H:i:s') ?? Date('Y-m-d H:i:s', strtotime('+'.$plan_data->plan_duration. 'days')); 
+                $user_subscription->title           =  $plan_data->title; 
+                $user_subscription->price           =  $plan_data->price; 
+                $user_subscription->currency_code   =  $plan_data->currency_code; 
+                $user_subscription->month           =  $plan_data->month; 
+                $user_subscription->plan_duration   =  $plan_data->plan_duration; 
+                $user_subscription->plan_type       =  $request->plan_type ?? $plan_data->plan_type; 
+                $user_subscription->apple_plan_id   =  $plan_data->apple_plan_id; 
+                $user_subscription->order_id        =  $verificationResult['latest_receipt_info'][0]['original_transaction_id']; 
+                $user_subscription->save(); 
+    
+                // Notification for subscription purchase
+    
+                $title = $plan_data->title." purchased successfully";
+                $message = $plan_data->title." purchased successfully"; 
+                Helper::send_notification('single', 0, Auth::id(), $title, 'subscription_purchase', $message, []);
+                
+                return $this->success([],'Subscription purchased successfully');
+            }
+            return $this->error('Something went wrong','Something went wrong');
         }catch(Exception $e){
             return $this->error($e->getMessage(),'Exception occur');
         }

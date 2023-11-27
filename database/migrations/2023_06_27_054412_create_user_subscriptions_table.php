@@ -26,6 +26,7 @@ return new class extends Migration
             $table->string('plan_type')->nullable();
             $table->string('google_plan_id')->nullable();
             $table->string('apple_plan_id')->nullable();
+            $table->text('order_id')->nullable();
             $table->timestamps();
         });
     }
