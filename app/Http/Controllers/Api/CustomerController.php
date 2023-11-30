@@ -41,7 +41,7 @@ class CustomerController extends BaseController
             $id = isset($request->id) ? $request->id : Auth::id(); 
             $data['user']   =  User::with('media','activeSubscription')->find($id);
             if(isset($request->id)){
-                $data['user']->makeHidden(['google_id','facebook_id']);
+                $data['user']->makeHidden(['google_id','facebook_id','apple_id']);
             } 
 
             $data['user']->media->map(function ($photo) {

@@ -109,6 +109,7 @@ Route::middleware(['admin'])->group(function () {
 
 Route::get('/subscription-expire', [LoginController::class, 'subscriptionExpire'])->name('cron');
 Route::get('/message-delete', [LoginController::class, 'messageDelete'])->name('cron');
+Route::get('/apple-plan-status-check', [LoginController::class, 'applePlanStatusCheck'])->name('cron');
 
 // Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
 // Auth::routes();

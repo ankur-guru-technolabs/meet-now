@@ -217,7 +217,7 @@ class AuthController extends BaseController
                 return $this->error($validateData->errors(),'Validation error',403);
             } 
             
-            $findUser = User::where('google_id', $request->social_id)->orWhere('facebook_id',$request->social_id)->first();
+            $findUser = User::where('google_id', $request->social_id)->orWhere('facebook_id',$request->social_id)->orWhere('apple_id',$request->social_id)->first();
             if($findUser){
                 $findUser->tokens()->delete();
                 $findUser->fcm_token = $request->fcm_token;
@@ -296,7 +296,7 @@ class AuthController extends BaseController
                 return $this->error($validateData->errors(),'Validation error',403);
             }   
 
-            if(!isset($request->google_id) && !isset($request->facebook_id)){
+            if(!isset($request->google_id) && !isset($request->facebook_id) && !isset($request->apple_id)){
                 $this->sendOtp($request);
             }
             
@@ -306,7 +306,7 @@ class AuthController extends BaseController
             $input                   = $request->all();
             $input['user_type']      = 'user';
             $input['phone_verified'] = 1;
-            if(isset($request->google_id) || isset($request->facebook_id)){
+            if(isset($request->google_id) || isset($request->facebook_id) || isset($request->apple_id)){
                 $input['email_verified'] = 1;
             }
             $input['age']            = $birthdayDate->diff($currentDate)->y;
@@ -340,14 +340,14 @@ class AuthController extends BaseController
                 }
                 UserPhoto::insert($user_photo_data);
 
-                if(!isset($request->google_id) && !isset($request->facebook_id)){
+                if(!isset($request->google_id) && !isset($request->facebook_id) && !isset($request->apple_id)){
                     $temp = Temp::where('key', $request->email)->value('value');
                     if ($temp !== null) {
                         $user_data['otp'] = (int) $temp;
                     }
                 }
 
-                if(isset($request->google_id) || isset($request->facebook_id)){
+                if(isset($request->google_id) || isset($request->facebook_id) || isset($request->apple_id)){
                     $title = "Welcome to Meet Now";
                     $message = "Welcome to Meet Now"; 
                     Helper::send_notification('single', 0, $user_data->id, $title, 'welcome', $message, []);
