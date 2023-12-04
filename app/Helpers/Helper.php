@@ -214,6 +214,6 @@ class Helper
             }
         });
 
-        return true;
+        return true; 
     }
 }
