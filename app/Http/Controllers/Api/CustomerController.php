@@ -1222,8 +1222,12 @@ class CustomerController extends BaseController
             $today_date = date('Y-m-d H:i:s');
             // $is_purchased = UserSubscription::where('user_id',$user_id)->where('expire_date','>',$today_date)->first();
             $is_purchased = UserSubscription::where('user_id',$user_id)->where('plan_type','free')->first();
+            $plan_data = Subscription::where('plan_type','free')->first();
+            if($request->plan_type == 'trial'){
+                $is_purchased = UserSubscription::where('user_id',$user_id)->where('plan_type','trial')->first();
+                $plan_data = Subscription::where('plan_duration',30)->first();
+            }
             if($is_purchased === null){
-                $plan_data = Subscription::where('id',$request->subscription_id)->first();
                 $user_subscription                  = new UserSubscription();
                 $user_subscription->user_id         =  $user_id; 
                 $user_subscription->subscription_id =  $plan_data->id; 
@@ -1300,7 +1304,7 @@ class CustomerController extends BaseController
                 $user_subscription->plan_duration   =  $plan_data->plan_duration; 
                 $user_subscription->plan_type       =  $request->plan_type ?? $plan_data->plan_type; 
                 $user_subscription->google_plan_id  =  $plan_data->google_plan_id; 
-                $user_subscription->order_id        =  $result->orderId; 
+                $user_subscription->order_id        =  $purchaseToken; 
                 $user_subscription->save(); 
     
                 // Notification for subscription purchase
@@ -1386,9 +1390,20 @@ class CustomerController extends BaseController
         try{
             $user_id = Auth::id();
             $today_date = date('Y-m-d H:i:s');
-            $is_purchased = UserSubscription::where('user_id',$user_id)->where('expire_date','>',$today_date)->first();
+            // $is_purchased = UserSubscription::where('user_id',$user_id)->where('expire_date','>',$today_date)->first();
+            $is_purchased = UserSubscription::where('user_id',$user_id)->latest()->first();
             if($is_purchased != null){
                 $data= Subscription::where('id',$is_purchased->subscription_id)->first();
+                if($is_purchased->google_plan_id && $is_purchased->order_id){
+                    Helper::googlePlanStatusCheck($is_purchased->google_plan_id,$is_purchased->order_id);
+                }
+                if($is_purchased->apple_plan_id && $is_purchased->order_id){
+                    Helper::applePlanStatusCheck($is_purchased->order_id);
+                }
+                $is_purchased = UserSubscription::where('user_id',$user_id)->where('expire_date','>',$today_date)->first();
+                if($is_purchased == null){
+                    $data= Subscription::where('plan_type','free')->first();
+                }
             }else{
                 $data= Subscription::where('plan_type','free')->first();
             }
