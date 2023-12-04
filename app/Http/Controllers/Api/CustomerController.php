@@ -25,7 +25,6 @@ use App\Models\UserSubscription;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Lib\RtcTokenBuilder;
-use App\Services\GooglePlayService;
 use DateTime;
 use Exception;
 use Helper; 
@@ -1214,9 +1213,9 @@ class CustomerController extends BaseController
         return $this->error('Something went wrong','Something went wrong');
     }
    
-    // PURCHASE SUBSCRIPTION
+    // PURCHASE SUVSCRIPTION
     
-    public function purchaseFreeSubscription(Request $request){
+    public function purchaseSubscription(Request $request){
         try{
             $user_id = Auth::id();
             $today_date = date('Y-m-d H:i:s');
@@ -1227,6 +1226,7 @@ class CustomerController extends BaseController
                 $is_purchased = UserSubscription::where('user_id',$user_id)->where('plan_type','trial')->first();
                 $plan_data = Subscription::where('plan_duration',30)->first();
             }
+            $is_purchased = UserSubscription::where('user_id',$user_id)->where('expire_date','>',$today_date)->first();
             if($is_purchased === null){
                 $user_subscription                  = new UserSubscription();
                 $user_subscription->user_id         =  $user_id; 

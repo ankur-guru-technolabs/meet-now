@@ -20,8 +20,7 @@ class UserSubscription extends Model
         'plan_duration',
         'plan_type',
         'google_plan_id',
-        'apple_plan_id',
-        'order_id'
+        'apple_plan_id'
     ];
 
     public function user()
