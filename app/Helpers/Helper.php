@@ -271,6 +271,6 @@ class Helper
                 $is_purchased = UserSubscription::where('user_id',$user_id)->update(['expire_date' => $expiryDate]);
             }
         } 
-        return true;
+        return true; 
     }
 }
