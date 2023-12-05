@@ -974,9 +974,9 @@ class CustomerController extends BaseController
             $user_id = Auth::id();
             $today_date = date('Y-m-d H:i:s');
             $is_purchased = UserSubscription::where('user_id',$user_id)->where('expire_date','>',$today_date)->first();
-            if($is_purchased === null){
-                return $this->error('Please purchase subscription for video call','Please purchase subscription for video call');
-            }
+            // if($is_purchased === null){
+            //     return $this->error('Please purchase subscription for video call','Please purchase subscription for video call');
+            // }
 
             if (Auth::user()) { 
                 $appID =  env("AGORA_APP_ID", "c9089a32ac044cb699ca506a7078318d");
