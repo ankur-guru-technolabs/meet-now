@@ -13,6 +13,7 @@ use App\Models\Gender;
 use App\Models\Hobby;
 use App\Models\Religion;
 use App\Models\User;
+use App\Models\UserBlock;
 use App\Models\UserLikes;
 use App\Models\UserPhoto;
 use App\Models\UserView;
@@ -436,8 +437,13 @@ class CustomerController extends BaseController
                                     $join->on('users.id', '=', 'ul2.like_to')
                                          ->where('ul2.like_from', '=', Auth::id());
                                 })
+                                ->leftJoin('user_blocks as ub', function ($join) {
+                                    $join->on('users.id', '=', 'ub.block_to')
+                                         ->where('ub.block_from', '=', Auth::id());
+                                })
                                 ->whereNull('ul1.id')
                                 ->whereNull('ul2.id')
+                                ->whereNull('ub.id')
                                 ->where('users.updated_at', '>=', now()->subMinutes(5));
 
             $user_list  =   $query->select('users.id', 'name', 'location', 'age','live_latitude','live_longitude')->get();
@@ -788,6 +794,30 @@ class CustomerController extends BaseController
         return $this->error('Something went wrong','Something went wrong');
     }
   
+    // BLOCK 
+
+    public function block(Request $request){
+        try{
+            $validateData = Validator::make($request->all(), [
+                'block_to' => 'required', 
+            ]);
+
+            if ($validateData->fails()) {
+                return $this->error($validateData->errors(),'Validation error',403);
+            }
+
+            $user_block = new UserBlock();
+            $user_block->block_from = Auth::id();
+            $user_block->block_to = $request->block_to;
+            $user_block->save();
+
+            return $this->success([],'Blocked done successfully');
+        }catch(Exception $e){
+            return $this->error($e->getMessage(),'Exception occur');
+        }
+        return $this->error('Something went wrong','Something went wrong');
+    }
+
     // REPORT 
 
     public function report(Request $request){

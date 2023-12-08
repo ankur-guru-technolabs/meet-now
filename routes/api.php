@@ -38,6 +38,7 @@ Route::middleware('auth:api')->group(function () {
     Route::post('change-read-status', [CustomerController::class,'changeReadStatus'])->name('change-read-status');
     Route::post('send-message', [CustomerController::class,'sendMessage'])->name('send-message');
     Route::post('unmatch', [CustomerController::class,'unmatch'])->name('unmatch');
+    Route::post('block', [CustomerController::class,'block'])->name('block');
     Route::post('report', [CustomerController::class,'report'])->name('report');
     Route::post('contact-support', [CustomerController::class,'contactSupport'])->name('contact-support');
     Route::get('who-viewed-me', [CustomerController::class,'whoViewedMe'])->name('who-viewed-me');
