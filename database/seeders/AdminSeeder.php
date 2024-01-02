@@ -18,7 +18,7 @@ class AdminSeeder extends Seeder
         //
         $admin = User::create([
             'name' => 'Admin user',
-            'email' => 'admin@gmail.com',
+            'email' => 'james@meetnow.com',
             'phone_no' => '+911234567890',
             'location' => 'Raiya Road Rajkot',
             'latitude' => '22.298340',
@@ -37,7 +37,7 @@ class AdminSeeder extends Seeder
             'religion'=> 2,
             'aboutb'=> "Hy i am admin",
             'distance_in'=> 0,
-            'password' => bcrypt('123456'),
+            'password' => bcrypt('James1234!@#'),
             'user_type' =>'admin',
         ]);
     }
